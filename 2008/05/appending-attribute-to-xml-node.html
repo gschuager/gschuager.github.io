@@ -1,0 +1,132 @@
+<html>
+<head>
+  <title>Appending an attribute to a XML node | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Appending an attribute to a XML node</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 12 May 2008</p>
+
+<div><p>I just needed to append an attribute to a tag in a XML file, and it took me a  while to figure it out how to do it from the command line.</p>
+<p>The &quot;easiest&quot; way I&#39;ve found is  using a tool called <a href="http://xmlstar.sourceforge.net/">XMLStartlet</a>.</p>
+<p>Some background... I am automating a Clickonce deployment through a nant  build file and I need to specify in the application manifest that one of the  files is a &quot;<a href="http://msdn.microsoft.com/es-es/library/6fehc36e%28VS.80%29.aspx">Data File</a>&quot;. I&#39;m using <a href="http://msdn.microsoft.com/en-us/library/acz3y3te.aspx">mage</a> to  generate the manifests.</p>
+<p>The app.exe.manifest XML file (application manifest) looks something like  this:</p>
+<pre class="highlighted"><code class="xml"><span class="pi">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
+<span class="tag">&lt;<span class="title">asmv1:assembly</span> <span class="attribute">xmlns:asmv3</span>=<span class="value">"urn:schemas-microsoft-com:asm.v3"</span> <span class="attribute">xmlns:dsig</span>=<span class="value">"http://www.w3.org/2000/09/xmldsig#"</span> <span class="attribute">xmlns</span>=<span class="value">"urn:schemas-microsoft-com:asm.v2"</span> <span class="attribute">xmlns:asmv1</span>=<span class="value">"urn:schemas-microsoft-com:asm.v1"</span> <span class="attribute">xmlns:asmv2</span>=<span class="value">"urn:schemas-microsoft-com:asm.v2"</span> <span class="attribute">xmlns:xsi</span>=<span class="value">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attribute">xmlns:co.v1</span>=<span class="value">"urn:schemas-microsoft-com:clickonce.v1"</span> <span class="attribute">xsi:schemaLocation</span>=<span class="value">"urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd"</span> <span class="attribute">manifestVersion</span>=<span class="value">"1.0"</span>&gt;</span>
+
+...
+
+<span class="tag">&lt;<span class="title">file</span> <span class="attribute">name</span>=<span class="value">"windsor.config.xml"</span> <span class="attribute">size</span>=<span class="value">"819"</span>&gt;</span>
+ <span class="tag">&lt;<span class="title">hash</span>&gt;</span>
+   <span class="tag">&lt;<span class="title">dsig:Transforms</span>&gt;</span>
+     <span class="tag">&lt;<span class="title">dsig:Transform</span> <span class="attribute">Algorithm</span>=<span class="value">"urn:schemas-microsoft-com:HashTransforms.Identity"</span> /&gt;</span>
+   <span class="tag">&lt;/<span class="title">dsig:Transforms</span>&gt;</span>
+   <span class="tag">&lt;<span class="title">dsig:DigestMethod</span> <span class="attribute">Algorithm</span>=<span class="value">"http://www.w3.org/2000/09/xmldsig#sha1"</span> /&gt;</span>
+   <span class="tag">&lt;<span class="title">dsig:DigestValue</span>&gt;</span>EO69DP0Ewj2rOeFxdwSaqN6NY1s=<span class="tag">&lt;/<span class="title">dsig:DigestValue</span>&gt;</span>
+ <span class="tag">&lt;/<span class="title">hash</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">file</span>&gt;</span>
+
+...
+
+<span class="tag">&lt;/<span class="title">asmv1:assembly</span>&gt;</span></code></pre>
+<p>My requirement  was to append the writeableType attribute with value &quot;applicationData&quot; to the  shown &quot;file&quot; node.</p>
+<p>To accomplish this I&#39;ve used this command:</p>
+<pre class="highlighted"><code class="brainfuck"><span class="comment">xml</span> <span class="comment">ed</span> <span class="literal">-</span><span class="comment">N</span> <span class="comment">a="urn:schemas</span>-<span class="comment">microsoft</span>-<span class="comment">com:asm</span>.<span class="comment">v1"</span> <span class="literal">-</span><span class="comment">N</span> <span class="comment">b="urn:schemas</span>-<span class="comment">microsoft</span>-<span class="comment">com:asm</span>.<span class="comment">v2"</span> <span class="literal">-</span><span class="comment">a</span> <span class="comment">"/a:assembly/b:file</span>[<span class="comment">@name='windsor</span>.<span class="comment">config</span>.<span class="comment">xml'</span>]<span class="comment">/</span>.<span class="comment">"</span> <span class="literal">-</span><span class="comment">t</span> <span class="comment">attr</span> <span class="literal">-</span><span class="comment">n</span> <span class="comment">writeableType</span> <span class="literal">-</span><span class="comment">v</span> <span class="comment">applicationData</span> <span class="comment">app</span>.<span class="comment">exe</span>.<span class="comment">manifest</code></pre>
+<p>You get the resulting XML in the standard output (which need to be  redirected), and the result contains:</p>
+<pre class="highlighted"><code class="xml"><span class="tag">&lt;<span class="title">file</span> <span class="attribute">name</span>=<span class="value">"windsor.config.xml"</span> <span class="attribute">size</span>=<span class="value">"819"</span> <span class="attribute">writeableType</span>=<span class="value">"applicationData"</span>&gt;</span></code></pre>
+<p>The XML namespaces make it somewhat tricky to get the correct arguments for  xml.exe, but when namespaces are not specified it turns out to be pretty easy  and straightforward.</p>
+<p>Remember also that if you want to include this command line in a nant script you will need to replace the double quotes with &quot;&amp; quot;&quot; (without the space)</p>
+<p>I think that XMLStartlet will be useful for me in the future, so this one goes  to my toolbox from now.</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

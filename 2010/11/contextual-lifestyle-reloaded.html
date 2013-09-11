@@ -1,0 +1,148 @@
+<html>
+<head>
+  <title>Contextual Lifestyle Reloaded | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Contextual Lifestyle Reloaded</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 27 Nov 2010</p>
+
+<div><p>Some time ago I did some experimentation with a custom Castle Windsor lifestyle under the main motivation of coming up with a way for managing the NHibernate session in a fat client application.</p>
+<p>After I posted <a href="http://blog.schuager.com/2008/11/custom-windsor-lifestyle.html">my findings</a> on that matter I have continued spiking a cleaner solution and I&#39;ve came up with something worth sharing again; but this time, rather than posting the code here, I preferred to share it in a more visible and maintainable place, so I asked <a href="http://bugsquash.blogspot.com/">Mauricio</a> if he was willing to include it in the Castle.Windsor.Lifestyles contrib project on github and he certainly did that (after reviewing my implementation and adding code for coping with components release - thanks Mauricio!)</p>
+<p>As explained in my previous post about this matter, the idea of this lifestyle is to be able to define a context (or scope) in which the container will resolve always the same instance of a given component and when asking for the same component outside of that context, a new instance will be created.</p>
+<p>One of the main changes from my previous attempt is that before I used an implicit delimitation of the context based on &quot;a single call to container.Resolve&quot;, but since then I&#39;ve found that that strategy was rather limiting, so in this new implementation, the context can be explicitly defined by the <code>ContainerContext</code> class; although it is worth noting that the implicit delimitation of contexts can still be used in this new implementation.</p>
+<p>To better describe the intended behavior, I’m including here a few tests that I think that should help make my intention clearer:</p>
+<pre class="highlighted"><code class="cs">[Test]
+<span class="keyword">public</span> <span class="keyword">void</span> Should_resolve_the_same_instances_when_inside_the_same_context()
+{
+    kernel.Register(Component.For&lt;ComponentA&gt;().LifeStyle.Custom(<span class="keyword">typeof</span>(ContextualLifestyle)));
+    <span class="keyword">using</span> (<span class="keyword">new</span> ContainerContext(kernel))
+    {
+        <span class="keyword">var</span> c1 = kernel.Resolve&lt;ComponentA&gt;();
+        <span class="keyword">var</span> c2 = kernel.Resolve&lt;ComponentA&gt;();
+        Assert.That(c1, Is.SameAs(c2));
+    }
+}
+
+[Test]
+<span class="keyword">public</span> <span class="keyword">void</span> Should_resolve_different_instances_when_inside_different_contexts()
+{
+    kernel.Register(Component.For&lt;ComponentA&gt;().LifeStyle.Custom(<span class="keyword">typeof</span>(ContextualLifestyle)));
+
+    ComponentA c1, c2;
+    <span class="keyword">using</span> (<span class="keyword">new</span> ContainerContext(kernel))
+    {
+        c1 = kernel.Resolve&lt;ComponentA&gt;();
+    }
+    <span class="keyword">using</span> (<span class="keyword">new</span> ContainerContext(kernel))
+    {
+        c2 = kernel.Resolve&lt;ComponentA&gt;();
+    }
+
+    Assert.That(c1, Is.Not.SameAs(c2));
+}
+
+[Test]
+<span class="keyword">public</span> <span class="keyword">void</span> Should_implicitly_initialize_a_new_context_when_there_is_none_created()
+{
+    kernel.Register(Component.For&lt;ComponentA&gt;().LifeStyle.Custom(<span class="keyword">typeof</span>(ContextualLifestyle)));
+
+    <span class="keyword">var</span> c1 = kernel.Resolve&lt;ComponentA&gt;();
+    <span class="keyword">var</span> c2 = kernel.Resolve&lt;ComponentA&gt;();
+    Assert.That(c1, Is.Not.SameAs(c2));
+}</code></pre>
+<p>This lifestyle is supposed to work with nested dependencies, generic components, and in multithreaded scenarios, so if you use it and find anything wrong with it, please let me know.</p>
+<p>You can get the code from here: <a href="https://github.com/castleprojectcontrib/Castle.Windsor.Lifestyles">https://github.com/castleprojectcontrib/Castle.Windsor.Lifestyles</a></p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

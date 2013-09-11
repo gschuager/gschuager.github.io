@@ -1,0 +1,114 @@
+<html>
+<head>
+  <title>Custom Windsor lifestyle: ResolutionContextLifestyleManager | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Custom Windsor lifestyle: ResolutionContextLifestyleManager</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 6 Nov 2008</p>
+
+<div><blockquote>
+<p>UPDATED 27/11/2011: New implementation <a href="/2010/11/contextual-lifestyle-reloaded.html">here</a></p>
+</blockquote>
+<p>For reasons that will become clear in a future post (or later in this one), I needed to implement a custom lifestyle for Microkernel/Windsor. The required behavior was to propagate an instance of a component through the whole resolution chain but no further.</p>
+<p>Let me explain it a little better.</p>
+<p>The default lifestyle used by the container when none is specified is Singleton. This means that the first time that a service is resolved, the instance created is cached, and every other time after that, this same instance is returned.</p>
+<p>You can also specify a Transient lifestyle, which indicates that every time that a service is being resolved a new instance is created.</p>
+<p>What I was looking for here was some way to specify context boundaries in order that when the container is asked to provide a dependency for a given service within these boundaries, it will provides always the same instance, but when you are outside that context (or inside a different one) it will resolve a different (new) instance.
+This behavior is achieved by the ResolutionContextLifestyleManager, that although it is not perfect at all (it is not thread-safe for example), fulfills my current requirements very well.</p>
+<p>The implementation is based in remembering the type of the handler that initiates the resolution chain along with the instance just created, then every time that an instance is asked for within the same resolution chain, the cached instance is returned. It also hooks to the Kernel.ComponentCreated event in order to determine when the cached instances must be released (the resolution starter component has been created). It has grow a little messy to enable support for generic services.</p>
+<p>I&#39;ve put together the custom lifestyle with some tests in a solution that you can download from <a href="http://www.mediafire.com/?jh3yoimcume">here</a>.</p>
+<p>The motivation behind this idea was to enable the usage of simultaneous forms in a rich-client environment where each one maintains its own context (NHibernate session manager in my current scenario).</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

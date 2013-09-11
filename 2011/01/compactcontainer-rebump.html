@@ -1,0 +1,136 @@
+<html>
+<head>
+  <title>CompactContainer rebump | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>CompactContainer rebump</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 8 Jan 2011</p>
+
+<div><p>Almost a year ago I did some experimentation with porting <a href="http://stw.castleproject.org/Windsor.MainPage.ashx">Castle</a> <a href="https://github.com/castleproject/Castle.Windsor">Windsor</a> to be used under the .NET Compact Framework, and while I got it done (excluding several features; mainly everything that has to do with proxys), it was clear that its implementation was not though to be used in a resource-constrained environment.</p>
+<p><img src="/assets/images/container.jpeg" class="align-right" /></p>
+<p>Windsor has lots of functionality that I was wishing to be able to use in some Compact Framework applications, but according to the results of my tests, it was slower and consumed more memory than my own <a href="http://code.google.com/p/compactcontainer/">CompactContainer</a>. Sum that to the fact that Windsor is evolving every day and most of the new stuff use features of .NET that are not available under the Compact Framework, and I had a pretty good reason not go further with this endeavor. </p>
+<p>Considering the previously described experiments I&#39;ve decided to add the features I was needing to <a href="http://code.google.com/p/compactcontainer/">CompactContainer</a>.</p>
+<p>So my first step was to migrate the repository to Mercurial (good: it is so much easy to work with than SVN / bad: you now need a <a href="http://tortoisehg.bitbucket.org/">hg client</a> to get the source code), then I refactored a little the existing code-base and finally I added several new features.</p>
+<p>Here is a list of the major changes and additions:</p>
+<ul>
+<li>Ditched .NET Compact Framework 2.0 support</li>
+<li>Lots of internal refactorings:<ul>
+<li>Changed main namespace from InversionOfControl to CompactContainer</li>
+<li>Renamed IHandler to IActivator (implementors are responsible of instantiating components)</li>
+<li>Removed ComponentList and replaced by IEnumerable<ComponentInfo> and extension methods</li>
+<li>Changed auto registration stuff by implementations of IDiscoveryConvention</li>
+<li>Removed capability to resolve component given its implementation type.</li>
+<li>... several others that I cannot remember right now... (I should really keep a changelog file)</li>
+</ul>
+</li>
+<li>Major new features:<ul>
+<li><strong>Implemented <a href="http://code.google.com/p/compactcontainer/wiki/ComponentsRegistration">programmatic registration</a> heavily based on Castle Windsor API</strong></li>
+<li>Added several <a href="http://code.google.com/p/compactcontainer/wiki/ExtensionPoints">extension points</a>: IActivator, <strong>IDependencyResolver</strong>, <strong>IComponentSelector</strong> and IDiscoveryConvention</li>
+<li>Added property injection support</li>
+<li>Added container events for component registration and component resolution</li>
+<li>Added basic container facilities support (a-la-Windsor)</li>
+<li>Added basic configuration method to be used by IComponentsInstaller and IFacility implementors</li>
+</ul>
+</li>
+</ul>
+<p>Another thing that I&#39;ve done is to remove the binary files available for download... I&#39;ve done this for mainly 2 reasons:</p>
+<ul>
+<li>I don&#39;t have an automated build process, so I needed to remember to make this archive manually in each commit and I always keep forgetting about it (I need to do something about this)</li>
+<li>the existing file was compiled for just one target (Pocket PC 2003 SE Emulator), but most probably you&#39;d need to compile it again for the target platform that you are actually using, so it seems worthless to have to maintain something that in the end it is not going to be used; however, I see in my Google Analytics reports that the binaries were downloaded several times, so I promise to put it up again once I solve the versioning/automation stuff.</li>
+</ul>
+<p>All in all, I&#39;m very happy with the current state of this project and it is actually helping me a lot in some places.</p>
+<p>If you have some comment or suggestion or bug report about CompactContainer, feel free to contact me and let me know!</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

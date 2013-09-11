@@ -1,0 +1,140 @@
+<html>
+<head>
+  <title>CompactContainer new features | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>CompactContainer new features</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 26 Nov 2008</p>
+
+<div><p>Last week I&#39;ve found this <a href="http://www.agilification.com/post/Dependency-Injection-for-the-Compact-Framework.aspx">post</a>, in which <a href="http://www.agilification.com/">Jeff Doolittle</a> made an analysis of some alternatives about using dependency injection with the .NET Compact Framework.</p>
+<p>As I&#39;ve faced the same decision some time ago and ended rolling out my own solution, I pointed him to <a href="http://code.google.com/p/compactcontainer/">CompactContainer</a>.</p>
+<p>Apparently he likes the project but needs some features not implemented at the time. He sent me some patches and in the end we&#39;ve added the following features to CompactContainer.</p>
+<h3>Attribute to mark the injectable constructor</h3>
+<p>By default, the container uses the constructor with most satisfiable (I think that&#39;s not a word...) dependencies to instantiate each component. This is the default behavior of Windsor/Microkernel.</p>
+<p>Now, we have created an extension point where the default IHandler (responsible of creation and initialization of each component) can be specified and we&#39;ve created an AttributedHandler that allows to select which constructor to use by means of an attribute.</p>
+<p>The attribute type could be specified by the user when creating the AttributedHandler.</p>
+<p>Take a look at the following example:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> container = <span class="keyword">new</span> CompactContainer(); 
+container.DefaultHandler = <span class="keyword">new</span> AttributedHandler(); 
+container.AddComponent(<span class="keyword">typeof</span>(IDependencyA), <span class="keyword">typeof</span>(DependencyA)); 
+container.AddComponent(<span class="keyword">typeof</span>(IDependencyB), <span class="keyword">typeof</span>(DependencyB)); 
+container.AddComponent(<span class="keyword">typeof</span>(MyComponent)); 
+container.Resolve&lt;MyComponent&gt;(); 
+...
+
+<span class="keyword">public</span> <span class="keyword">class</span> MyComponent 
+{ 
+    [Inject] 
+    <span class="keyword">public</span> MyComponent(IDependencyA a) { ... }
+
+    <span class="keyword">public</span> MyComponent(IDependencyA a, IDependencyB b) { ... } 
+}</code></pre>
+<p>The first constructor will be used to create the MyComponent service even when all the dependencies for the second constructor are available.</p>
+<h3>Autoregistration of components</h3>
+<p>Jeff also added a feature where the container automatically registers concrete types when asked for them and they are not already registered.
+This has required some improvements in the code base:</p>
+<ul>
+<li>Specification of the default lifestyle (this can be improved a lot introducing something like ILifestyleManager to decouple the lifestyle&#39;s logic)</li>
+<li>Generation of a default component key (based on the type) and overloads to the registration methods that don&#39;t require the component key and use the default one instead.</li>
+</ul>
+<p>Example:</p>
+<pre class="highlighted"><code class="cs">container = <span class="keyword">new</span> CompactContainer(); 
+container.AddComponent(<span class="keyword">typeof</span>(IDependencyA), <span class="keyword">typeof</span>(DependencyA)); 
+<span class="keyword">var</span> comp = container.Resolve&lt;MyComponent&gt;();</code></pre>
+<p>comp will be a singleton of type MyComponent and it is resolved ok even when the container knows nothing about it before the call to <code>Resolve&lt;T&gt;;</code>.</p>
+<p>To sum up <a href="http://www.agilification.com/post/Dependency-Injection-for-the-Compact-Framework-Part-2.aspx">here</a> you can read Jeff&#39;s thoughts about CompactContainer. Thanks Jeff!</p>
+<p>Open source rulez!</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

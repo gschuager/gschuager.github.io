@@ -1,0 +1,138 @@
+<html>
+<head>
+  <title>jQuery Autocomplete + JSON + ASP.NET MVC | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>jQuery Autocomplete + JSON + ASP.NET MVC</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 2 Sep 2008</p>
+
+<div><p>It just took me a while to get this running, so maybe this could save you some time.</p>
+<p>The requirement was to use the <a href="http://bassistance.de/jquery-plugins/jquery-plugin-autocomplete/">jQuery Autocomplete plugin</a> to aid in the selection of some data coming from a database in an application using ASP.NET MVC Preview 4.</p>
+<p>If you would like to see this plugin in action, refer to its <a href="http://jquery.bassistance.de/autocomplete/demo/">demo page</a>.</p>
+<p>The <a href="http://docs.jquery.com/Plugins/Autocomplete/autocomplete#url_or_dataoptions">documentation</a> of the plugin states that when a remote source is used, the result must be returned formatted with one value on each line; but since I want to return a list of complex objects I would like to use JSON... googling around I&#39;ve arrived to <a href="http://www.it-eye.nl/weblog/2008/08/23/using-jquery-autocomplete-with-grails-and-json/">this</a> page and learnt about the <strong>parse</strong> and <strong>dataType</strong> options that are not documented... using this options you can make the autocomplete plugin to receive remote data in JSON format.</p>
+<p>So... this is the JS code that configures the plugin:</p>
+<pre class="highlighted"><code class="javascript">$(document).ready( <span class="keyword">function</span>() {
+  $(<span class="string">'#signalName'</span>).autocomplete(<span class="string">'&lt;%=Url.Action("Lookup", "Signal") %&gt;'</span>, {
+      dataType: <span class="string">'json'</span>,
+      parse: <span class="keyword">function</span>(data) {
+          <span class="keyword">var</span> rows = <span class="keyword">new</span> Array();
+          <span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;data.length; i++){
+              rows[i] = { data:data[i], value:data[i].SignalName, result:data[i].SignalName };
+          }
+          <span class="keyword">return</span> rows;
+      },
+      formatItem: <span class="keyword">function</span>(row, i, n) {
+          <span class="keyword">return</span> row.SignalName + <span class="string">' - '</span> + row.Description;
+      },
+      width: <span class="number">300</span>,
+      mustMatch: <span class="literal">true</span>,
+  });
+});</code></pre>
+<p>Here, I specify that the rows in the drop down will have the &quot;SignalName - Description&quot; format, and that the value that will be put in the textbox is the SignalName property of the selected item... this is done with the <strong>value</strong> property of the <strong>rows</strong> array.</p>
+<p>The ASP.NET MVC controller/action that provides the data will be something like this:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> SignalController : Controller {
+  ...
+  <span class="keyword">public</span> ActionResult Lookup(<span class="keyword">string</span> q, <span class="keyword">int</span> limit)
+  {
+      <span class="keyword">var</span> list = signalRepository.SearchByPage(q, <span class="number">1</span>, limit);
+      <span class="keyword">var</span> data = <span class="keyword">from</span> s <span class="keyword">in</span> list <span class="keyword">select</span> <span class="keyword">new</span> {s.SignalName, s.Description};
+      <span class="keyword">return</span> Json(data);
+  }
+  ...
+}</code></pre>
+<p>To get this running, don&#39;t forget to include the required javascript files and the css to style the autocomplete drop down. Refer to the documentation for more information.</p>
+<p>That&#39;s all for now.</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<html>
+<head>
+  <title>How to setup Mercurial server on Windows/IIS | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>How to setup Mercurial server on Windows/IIS</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 19 Mar 2010</p>
+
+<div><p>In this post I will enumerate the resources and the steps required to setup a Mercurial server under a Windows environment running on top of IIS 7.</p>
+<p>This is not as straight-forward as it should be but it is not very difficult either.</p>
+<p>You will need to download the following:</p>
+<ul>
+<li>Mercurial 1.5.1 <a href="http://bitbucket.org/tortoisehg/thg-winbuild/downloads/mercurial-1.5.1.msi">http://bitbucket.org/tortoisehg/thg-winbuild/downloads/mercurial-1.5.1.msi</a></li>
+<li>Python 2.6 <strong>x86 installer</strong> <a href="http://www.python.org/download/releases/2.6/">http://www.python.org/download/releases/2.6/</a><ul>
+<li>if you use another version of Python you will probably end up with a <em>&quot;Bad magic number&quot;</em> error, as pointed by Lloyd in the comments</li>
+<li>if you use the x64 version you will get some other error messages and hg will not work</li>
+</ul>
+</li>
+<li>hgwebdir.cgi <a href="http://selenic.com/repo/hg/raw-file/ff2704a8ded3/hgwebdir.cgi">http://selenic.com/repo/hg/raw-file/ff2704a8ded3/hgwebdir.cgi</a></li>
+<li>IIS UrlRewriter module <a href="http://www.iis.net/expand/URLRewrite">http://www.iis.net/expand/URLRewrite</a> (optional but very recommended)</li>
+</ul>
+<p>I will split the configuration steps into setting up the file system and configuring IIS.</p>
+<h3>Setting up the file system</h3>
+<p><strong>1.</strong> Install Mercurial. <em>I will assume the default install path: C:\Program Files (x86)\Mercurial</em></p>
+<p><strong>2.</strong> Install Python. <em>I will assume the default install path: C:\Python26</em></p>
+<p><strong>3.</strong> Create a folder for your Hg web application. <em>I will assume this path: C:\hg</em></p>
+<p><strong>4.</strong> Create a subfolder called lib and uncompress the contents of the file C:\Program Files (x86)\Mercurial\library.zip into C:\hg\lib</p>
+<p><strong>5.</strong> Copy the folder C:\Program Files (x86)\Mercurial\Templates into c:\hg\lib</p>
+<p>At this point you should have something like this:</p>
+<p><img src="/assets/images/hgiis1.png" alt="folder structure"></p>
+<p><strong>6.</strong> Copy the hgwebdir.cgi (link at the top of the post) file into your wep app folder root c:\hg and modify it so that it match your Python installation folder and your lib folder. Using my current path assumptions you should end with something like the one in the left of the following picture:</p>
+<p><img src="/assets/images/hgiis2.png" alt="hgwebdir.cgi changes"></p>
+<p><strong>7.</strong> Create a folder named repos in c:\hg\repos. This folder will contain all our mercurial repositories. For testing purposed now we will create a test repository inside there; just run this from the command line &quot;hg init c:\hg\repos\test&quot; (this will create and initialize the test repository)</p>
+<p><strong>8.</strong> Create a file named hgweb.config at c:\hg\hgweb.config with the following content:</p>
+<pre class="highlighted"><code class="haskell">[paths]
+/ = repos/*
+
+[web]
+<span class="title">baseurl</span> = /hg
+<span class="title">push_ssl</span> = false
+<span class="title">allow_push</span> = *</code></pre>
+<p>here we are telling Mercurial basically 3 things: where are the repositories that it should serve, everybody can push, and it should allow pushes through non-secure connections (so we don&#39;t need to setup https)</p>
+<h3>Configuring IIS</h3>
+<p><strong>9.</strong> Add a new web application to your &quot;Default Web Site&quot;, name it &quot;hg&quot; and assign &quot;c:\hg&quot; to its Physical path.</p>
+<p><img src="/assets/images/hgiis3.png" alt="iis new application"></p>
+<p><strong>10.</strong> Now we need to configure our newly created app to be able to execute Python scripts. Click on the &quot;Handler Mappings&quot;</p>
+<p><img src="/assets/images/hgiis4.png" alt="iis handler mappings"></p>
+<p>then in &quot;Add Script Map...&quot; from the right menu</p>
+<p><img src="/assets/images/hgiis5.png" alt="iis add script map"></p>
+<p>and then enter the script extension and Python executable path as shown in the following picture:</p>
+<p><img src="/assets/images/hgiis6.png" alt="iis script map dialog"></p>
+<p><strong>11.</strong> The final step is to configure Url Rewriter module correctly to allow us to use our repository with a nice URL like this: <a href="http://server/hg/test">http://server/hg/test</a> instead of <a href="http://server/hg/hgwebdir.cgi/test">http://server/hg/hgwebdir.cgi/test</a>. For this you need to install the Url Rewriter module either using Web Platform installer or by manually doing so (link at the top of the post).</p>
+<p>Once you have Url Rewriter installed, select it from you application Feature View:</p>
+<p><img src="/assets/images/hgiis7.png" alt="iis url rewrite"></p>
+<p>then click on the &quot;Add Rules...&quot; action from the right side panel and select &quot;Blank Rule&quot;:</p>
+<p><img src="/assets/images/hgiis8.png" alt="iis add rules"></p>
+<p>and enter the new rule data as shown in the following picture:</p>
+<p><img src="/assets/images/hgiis9.png" alt="iis rule screen"></p>
+<p>And that should be all.</p>
+<p>Now try to navigate to <a href="http://localhost/hg">http://localhost/hg</a> with your browser and you should see something like this:</p>
+<p><img src="/assets/images/hgiis10.png" alt="hg web"></p>
+<p>Just remember to setup authentication if you are going to use this server over the internet. I left this to you since you can use any of the standard IIS authentication methods available.</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<html>
+<head>
+  <title>About | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Welcome</h2>
+<p>My name is Germán Schuager, I have an Electronic Engineering degree from the Universidad Nacional de Rosario (Argentina) and my main area of expertise is software development.</p>
+<p>Currently I&#39;m dedicated to implement mixed technology solutions based on hardware and software.</p>
+<p>I have more than 10 years of experience in software development and 6 years working on electronics systems targeted mainly to the agricultural industry, more specifically, precision agriculture.</p>
+<p>My main professional objectives are:</p>
+<ul>
+<li>Continuous improvement of my skills, researching and taking advantage of the latests technologies and tools available.</li>
+<li>To satisfy my customers needs using the best solution for the given requirements, maintaining always the highest quality standard.</li>
+</ul>
+<p>In this site you will find information about my activities, researches, the projects I&#39;m involved in and the ways to contact me.</p>
+<p>Feel free to drop me a line.</p>
+<h2>Bienvenido</h2>
+<p>Mi nombre es Germán Schuager, soy Ingeniero Electrónico recibido en la Universidad Nacional de Rosario (Argentina) y me especializo principalmente en el desarrollo de software.</p>
+<p>Actualmente me dedico a implementar soluciones tecnológicas integrales basadas en hardware y software.</p>
+<p>Cuento con más de 10 años de experiencia en el área de desarrollo de software y 6 años trabajando en el diseño de sistemas electrónicos orientados a la industria de la maquinaria agrícola, más especificamente en el area de agricultura de precisión.</p>
+<p>Mis principales objetivos profesionales son:</p>
+<ul>
+<li>Mejorar de forma continua investigando, evaluando y trabajando día a día con las mejores y más recientes tecnologías y herramientas disponibles.</li>
+<li>Satisfacer las necesidades de mis clientes utilizando la solución óptima según los requerimientos y manteniendo siempre el más alto estandar de calidad en todos mis trabajos.</li>
+</ul>
+<p>En este sitio encontrará información sobre mis actividades recientes, mis proyectos y las distintas formas de comunicarse conmigo.</p>
+<p>Ante cualquier inquietud no dude en contactarme.</p>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

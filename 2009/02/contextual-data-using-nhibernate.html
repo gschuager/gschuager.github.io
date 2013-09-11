@@ -1,0 +1,179 @@
+<html>
+<head>
+  <title>Contextual data using NHibernate filters | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Contextual data using NHibernate filters</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 12 Feb 2009</p>
+
+<div><p>I&#39;m in the middle of the development process of an application using NH for data access, and I&#39;m faced with a requirement that could be stated as follows:</p>
+<blockquote>
+<p>The application needs to provide support for different Contexts of execution, and certain entities must be context-aware, which means that at a given time, the application only see instances of those entities that corresponds to the current context of execution.</p>
+</blockquote>
+<p>Now, just remember that I have several entities defined that are used throught the entire application layer stack, so I wanted to solve this issue modifying as little as possible.</p>
+<p>I&#39;m very proud with the solution that I came up with, and also very amazed by the power of NHibernate.</p>
+<p>To simplify a little lets assume that I have a static class that defines the current context of execution:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">enum</span> ContexType
+{
+    ContextA,
+    ContextB,
+}
+
+<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> Context
+{
+    <span class="keyword">public</span> <span class="keyword">static</span> ContextType Current { <span class="keyword">get</span>; <span class="keyword">set</span>; }
+}</code></pre>
+<p>Then, I create an interface that will be implemented by all the entities that need to be contextualized:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">interface</span> IContextAware
+{
+    ContextType Context { <span class="keyword">get</span>; <span class="keyword">set</span>; }
+}</code></pre>
+<p>Given a Cat class that needs to be contextualized, then I add the property to the class and to the mapping:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> Cat : Entity, IContextAware
+{
+    ...
+    ContextType Context { <span class="keyword">get</span>; <span class="keyword">set</span>; }
+    ...
+}</code></pre>
+<pre class="highlighted"><code class="xml"><span class="tag">&lt;<span class="title">class</span> <span class="attribute">name</span>=<span class="value">"Cat"</span>&gt;</span>
+    ...
+    <span class="tag">&lt;<span class="title">property</span> <span class="attribute">name</span>=<span class="value">"Context"</span>&gt;</span>
+    ...
+<span class="tag">&lt;/<span class="title">class</span>&gt;</span></code></pre>
+<p>The idea now, is to use the dynamic filtering capabilities of NHibernate to only retrieve the Cats instances corresponding with the current context every time that a query against Cat is issued.</p>
+<p>Typically this means that I need to add a filter definition to the mappings and to specify the condition for that filter in every class mapping that need to be aware of this behavior.</p>
+<p>But there is an easier way to do this automatically:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> filterParametersType = <span class="keyword">new</span> Dictionary&lt;<span class="keyword">string</span>, IType&gt;(<span class="number">1</span>);
+filterParametersType.Add(<span class="string">"current"</span>, NHibernateUtil.Enum(<span class="keyword">typeof</span>(ContextType)));
+cfg.AddFilterDefinition(<span class="keyword">new</span> FilterDefinition(<span class="string">"contextFilter"</span>, <span class="string">":current = Context"</span>, filterParametersType));
+
+<span class="keyword">foreach</span> (<span class="keyword">var</span> mapping <span class="keyword">in</span> cfg.ClassMappings)
+{
+    <span class="keyword">if</span> (<span class="keyword">typeof</span>(IContextAware).IsAssignableFrom(mapping.MappedClass))
+    {
+        mapping.AddFilter(<span class="string">"contextFilter"</span>, <span class="string">":current = Context"</span>);
+    }
+}</code></pre>
+<p>Just do this (cfg is the NH Configuration object) before building the session factory and it creates the correct filter definition and adds the condition to every entity mapped that implements IContextAware.</p>
+<p>At this point we just have our filter defined; now we need to enable it in order to actually filter something. It would be very handy if we can enable filtering at session factory scope, but since the session factory is immutable we need to enable it for each session that we will be using.</p>
+<p>Wait.... maybe something else can do this work for us...</p>
+<p>The following interceptor actually takes care of 2 things:</p>
+<ol>
+<li>enables the context filter as soon as it is attached to the session, and</li>
+<li>assigns the correct value to the Context property of entities implementing IContextAware when they are persisted.</li>
+</ol>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> ContextInterceptor : EmptyInterceptor
+{
+    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> SetSession(ISession session)
+    {
+         session.EnableFilter(<span class="string">"contextFilter"</span>).SetParameter(<span class="string">"current"</span>, Context.Current);
+    }
+
+    <span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">bool</span> OnSave(<span class="keyword">object</span> entity, <span class="keyword">object</span> id, <span class="keyword">object</span>[] state, <span class="keyword">string</span>[] propertyNames, IType[] types)
+    {
+        <span class="keyword">var</span> contextAware = entity <span class="keyword">as</span> IContextAware;
+        <span class="keyword">if</span> (contextAware != <span class="keyword">null</span>)
+        {
+            <span class="keyword">int</span> index = Array.Find(propertyNames, <span class="number">0</span>, x =&gt; x.Equals(<span class="string">"Context"</span>));
+            state[index] = contextAware.Context = Context.Current;
+            <span class="keyword">return</span> <span class="keyword">true</span>;
+        }
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+    }
+}</code></pre>
+<p>Every session in the application needs to be created specifying this interceptor, but this should be an easy change (that depends on your architecture) if you are doing things right.</p>
+<p>And thats all, the rest of the application is untouched and the requirement is fulfilled in a very elegant way.</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

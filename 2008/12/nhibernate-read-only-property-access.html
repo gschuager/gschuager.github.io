@@ -1,0 +1,162 @@
+<html>
+<head>
+  <title>NHibernate Read-only property access | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>NHibernate Read-only property access</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 22 Dec 2008</p>
+
+<div><p>UPDATE: If you use the trunk you can now just do this (since rev. 3965):</p>
+<p><code>&lt;property name=&quot;Total&quot; type=&quot;Decimal&quot; access=&quot;readonly&quot;/&gt;</code></p>
+<p>Keep reading if you are using an older version of NHibernate.</p>
+<hr>
+<p>Recently I&#39;ve asked in the <a href="http://groups.google.com/group/nhusers">NHibernate mailing list</a> about how to map a property that is calculated in the domain but needs to be persisted in order to query data based on this property&#39;s value.</p>
+<p>The thread is <a href="http://groups.google.com/group/nhusers/browse_thread/thread/7251b55b123b1e1b?tvc=2&amp;q=+Calculated+property+mapping+">here</a> and the sample I&#39;ve used is the following:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">decimal</span> Total
+{
+   <span class="keyword">get</span> { <span class="keyword">return</span> calculateTotal(); }
+}
+
+<span class="keyword">private</span> <span class="keyword">decimal</span> calculateTotal()
+{
+   <span class="keyword">return</span> children.Sum(x =&gt; x.Price);
+}</code></pre>
+<p>Basically, you have 3 options to persist this property.</p>
+<h3>1. Add an empty set method</h3>
+<p>This is the simplest but the ugliest of the three, you don&#39;t need to do anything else and it works just fine:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">decimal</span> Total
+{
+   <span class="keyword">get</span> { <span class="keyword">return</span> calculateTotal(); }
+   <span class="keyword">set</span> { }
+}</code></pre>
+<h3>2. Use a nullable field to hold the value</h3>
+<p>Fabio suggested this approach:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">private</span> <span class="keyword">decimal</span> total?;
+
+<span class="keyword">public</span> <span class="keyword">decimal</span> Total
+{
+    <span class="keyword">get</span>
+    {
+        <span class="keyword">if</span> (!total.HasValue)
+            total = calculateTotal();
+        <span class="keyword">return</span> total.Value;
+    }
+}
+
+<span class="keyword">public</span> Item AddItem()
+{
+    invalidateTotal();
+}
+
+<span class="keyword">private</span> <span class="keyword">void</span> invalidateTotal()
+{
+    total = <span class="keyword">null</span>;
+}</code></pre>
+<p>In this case, the Total property is only calculated the first time that is required and its value cached, also you need to add calls to invalidateTotal() in every operation that would alter the result of the calculation.</p>
+<p>Here you should use <code>access=&quot;field.camelcase&quot;</code> when mapping the property.</p>
+<p>As long as you don&#39;t call <code>invalidateTotal()</code> again, the calculated value is persisted and restored from the DB without processing the sum again.</p>
+<p>This method is the most efficient, but requires you to put <code>invalidateTotal()</code> calls (and to don&#39;t forget about that) in some places... if you have a few calculated properties that each one depends on a few others it can get quite messy.</p>
+<h3>3. Read-only property accessor</h3>
+<p>Because of this issue, I&#39;ve dove into NHibernate source code and tried to create a new property accessor that would allow me to map the domain that I really want without any hassle.</p>
+<p>I was surprised at how easy I&#39;ve found what I wanted to do inside that jungle.</p>
+<p>I&#39;ve created a JIRA issue with the patch <del>but so far it is not applied to the trunk.</del></p>
+<p>In the mean time you can use the readonly property accessor from [here](invalid link) mapping it using the custom accessor functionality of NHibernate like this:</p>
+<pre class="highlighted"><code class="xml"><span class="tag">&lt;<span class="title">property</span> <span class="attribute">name</span>=<span class="value">"Total"</span> <span class="attribute">type</span>=<span class="value">"Decimal"</span> <span class="attribute">access</span>=<span class="value">"Namespace.ReadonlyAccessor, Assembly"</span>/&gt;</span></code></pre>
+<p>(remember to replace Namespace and Assembly with the real namespace and assembly name where you put ReadonlyPropertyAccessor.cs)</p>
+<p>This ReadonlyPropertyAccessor is working against NHibernate 2.0.0.GA and it needs a minor spell correction to make it work against the trunk... you will notice if you try.</p>
+<hr>
+<p>So, here we are... those were the 3 options... choose whichever you like most.</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

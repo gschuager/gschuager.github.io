@@ -1,0 +1,159 @@
+<html>
+<head>
+  <title>Polymorphic query using interfaces | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Polymorphic query using interfaces</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 23 Dec 2008</p>
+
+<div><p>Given an object model defined by the following classes/interfaces:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> Animal
+
+<span class="keyword">public</span> <span class="keyword">interface</span> IHasFourLegs
+
+<span class="keyword">public</span> <span class="keyword">interface</span> ICanFly
+
+<span class="keyword">public</span> <span class="keyword">class</span> Dog : Animal, IHasFourLegs
+
+<span class="keyword">public</span> <span class="keyword">class</span> Bird : Animal, ICanFly
+
+<span class="keyword">public</span> <span class="keyword">class</span> Unicorn : Animal, IHasFourLegs, ICanFly</code></pre>
+<p>Suppose that you want to persist this class hierarchy to a database and be able to easily retrieve all the entities that implement one of both interfaces... then NHibernate is your friend (as always)</p>
+<p>I&#39;ve chosen to map this using the <a href="http://www.nhforge.org/doc/nh/en/index.html#inheritance-tablepersubclass&quot;">table-per-subclass strategy</a>, but probably the other <a href="http://www.nhforge.org/doc/nh/en/index.html#inheritance-strategies">inheritance mapping strategies</a> would work as well:</p>
+<pre class="highlighted"><code class="xml"><span class="tag">&lt;<span class="title">hibernate-mapping</span> <span class="attribute">xmlns</span>=<span class="value">"urn:nhibernate-mapping-2.2"</span>
+                 <span class="attribute">assembly</span>=<span class="value">"Assembly"</span>
+                 <span class="attribute">namespace</span>=<span class="value">"Namespace"</span>&gt;</span>
+
+<span class="tag">&lt;<span class="title">class</span> <span class="attribute">name</span>=<span class="value">"Animal"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">id</span>&gt;</span>...
+  <span class="tag">&lt;<span class="title">property</span>&gt;</span>...
+<span class="tag">&lt;/<span class="title">class</span>&gt;</span>
+
+<span class="tag">&lt;<span class="title">joined-subclass</span> <span class="attribute">name</span>=<span class="value">"Dog"</span> <span class="attribute">extends</span>=<span class="value">"Animal"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">key</span>&gt;</span>...
+  <span class="tag">&lt;<span class="title">property</span>&gt;</span>...
+<span class="tag">&lt;/<span class="title">joined-subclass</span>&gt;</span>
+
+<span class="tag">&lt;<span class="title">joined-subclass</span> <span class="attribute">name</span>=<span class="value">"Bird"</span> <span class="attribute">extends</span>=<span class="value">"Animal"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">key</span>&gt;</span>...
+  <span class="tag">&lt;<span class="title">property</span>&gt;</span>...
+<span class="tag">&lt;/<span class="title">joined-subclass</span>&gt;</span>
+
+<span class="tag">&lt;<span class="title">joined-subclass</span> <span class="attribute">name</span>=<span class="value">"Unicorn"</span> <span class="attribute">extends</span>=<span class="value">"Animal"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">key</span>&gt;</span>...
+  <span class="tag">&lt;<span class="title">property</span>&gt;</span>...
+<span class="tag">&lt;/<span class="title">joined-subclass</span>&gt;</span>
+
+<span class="tag">&lt;/<span class="title">hibernate-mapping</span>&gt;</span></code></pre>
+<p>Now that we have our classes and their mappings we are going to query our domain to get all the entities that implement ICanFly.</p>
+<p>Basically you have 2 options right now: Criteria API and HQL.</p>
+<h3>Using Criteria API</h3>
+<p>This is very simple, all you need to do is this:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> flyers = session.CreateCriteria(<span class="keyword">typeof</span> (ICanFly)).List&lt;ICanFly&gt;();</code></pre>
+<h3>Using HQL</h3>
+<p>This one gets a little trickier (at least it got for me) since you need to explicitly import the interface type inside the mapping to get NH to know about it; this is simply done by adding the following line to your mapping:</p>
+<pre class="highlighted"><code class="xml"><span class="tag">&lt;<span class="title">import</span> <span class="attribute">class</span>=<span class="value">"Namespace.ICanFly"</span> <span class="attribute">rename</span>=<span class="value">"ICanFly"</span>/&gt;</span></code></pre>
+<p>After this little addition we can issue a successful HQL query:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> flyers = session.CreateQuery(<span class="string">"from ICanFly"</span>).List&lt;ICanFly&gt;();</code></pre>
+<h3>Remarks</h3>
+<ul>
+<li>The <code>import</code> mapping needed when using HQL seems to be used by NH to map the string used in the query (<code>ICanFly</code>) to an actual type... if you&#39;d have put <code>rename=&quot;Flyers&quot;</code> in the import element then the HQL would need to be <code>&quot;from Flyers&quot;</code>.</li>
+<li>At first, I thought that specifying the full name of the type directly in the HQL string would have been enough, but it is not.</li>
+<li>Take special care when trying to retrieve an ordered result set because since NH should issue several SELECT statements to get all the entities from the different tables (instead of using an UNION) the order of the results will probably be wrong.</li>
+</ul>
+<h3>Conclusion</h3>
+<p>This polymorphic behavior of NHibernate is just awesome because it allows you to be creative with your domain and frees you of the constraints imposed by the underlying relational model.</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<html>
+<head>
+  <title>Mutually exclusive checkboxes with jQuery | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Mutually exclusive checkboxes with jQuery</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 3 Sep 2008</p>
+
+<div><p>I was needing a way for the user to select none or just one item in a set... here is how I&#39;ve managed to achieve this functionality using jQuery:</p>
+<pre class="highlighted"><code class="xml"><span class="tag">&lt;<span class="title">html</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">head</span>&gt;</span>
+      <span class="tag">&lt;<span class="title">script</span> <span class="attribute">type</span>=<span class="value">"text/javascript"</span> <span class="attribute">src</span>=<span class="value">"http://code.jquery.com/jquery-latest.min.js"</span>&gt;</span><span class="javascript"></span><span class="tag">&lt;/<span class="title">script</span>&gt;</span>
+      <span class="tag">&lt;<span class="title">script</span> <span class="attribute">type</span>=<span class="value">"text/javascript"</span> <span class="attribute">language</span>=<span class="value">"javascript"</span>&gt;</span><span class="javascript">
+          $(document).ready(<span class="keyword">function</span>() {
+              $(<span class="string">'.mutuallyexclusive'</span>).click(<span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+                  checkedState = $(<span class="keyword">this</span>).attr(<span class="string">'checked'</span>);
+                  $(<span class="string">'.mutuallyexclusive:checked'</span>).each(<span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+                      $(<span class="keyword">this</span>).attr(<span class="string">'checked'</span>, <span class="literal">false</span>);
+                  });
+                  $(<span class="keyword">this</span>).attr(<span class="string">'checked'</span>, checkedState);
+              });
+          });              
+      </span><span class="tag">&lt;/<span class="title">script</span>&gt;</span>
+  <span class="tag">&lt;/<span class="title">head</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">body</span>&gt;</span>
+      <span class="tag">&lt;<span class="title">div</span>&gt;</span>
+          Red: <span class="tag">&lt;<span class="title">input</span> <span class="attribute">id</span>=<span class="value">"chkRed"</span> <span class="attribute">name</span>=<span class="value">"chkRed"</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span> <span class="attribute">value</span>=<span class="value">"red"</span> <span class="attribute">class</span>=<span class="value">"mutuallyexclusive"</span>&gt;</span>
+          Blue: <span class="tag">&lt;<span class="title">input</span> <span class="attribute">id</span>=<span class="value">"chkBlue"</span> <span class="attribute">name</span>=<span class="value">"chkBlue"</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span> <span class="attribute">value</span>=<span class="value">"blue"</span> <span class="attribute">class</span>=<span class="value">"mutuallyexclusive"</span>&gt;</span>
+          Green: <span class="tag">&lt;<span class="title">input</span> <span class="attribute">id</span>=<span class="value">"chkGreen"</span> <span class="attribute">name</span>=<span class="value">"chkGreen"</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span> <span class="attribute">value</span>=<span class="value">"green"</span> <span class="attribute">class</span>=<span class="value">"mutuallyexclusive"</span>&gt;</span>
+      <span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+  <span class="tag">&lt;/<span class="title">body</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">html</span>&gt;</span></code></pre>
+<p>(Based on <a href="http://forums.asp.net/p/1303486/2549303.aspx">this</a> post. Thanks Tony.)</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

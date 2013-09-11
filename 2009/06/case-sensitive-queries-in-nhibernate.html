@@ -1,0 +1,129 @@
+<html>
+<head>
+  <title>Case-sensitive queries in NHibernate using SQL Server | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Case-sensitive queries in NHibernate using SQL Server</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 19 Jun 2009</p>
+
+<div><p>Depending on the collation setting of your database (you probably already know this) the queries that you issue against it are treated as case-insensitive (CI collations) or as case-sensitive (CS collations).</p>
+<p>If your database use a CI collation and you need to do some case-sensitive querying, the target SQL statement would be something like this:</p>
+<pre class="highlighted"><code class="sql"><span class="operator"><span class="keyword">SELECT</span> u.Name
+<span class="keyword">FROM</span> Users u
+<span class="keyword">WHERE</span> u.Name <span class="keyword">like</span> <span class="string">'SomeName'</span> <span class="keyword">COLLATE</span> Modern_Spanish_CS_AS</code></pre>
+<p>Now, if you are using NHibernate you can do some things to make it help you issuing this kind of query.</p>
+<p>The first one is to just use the Criteria API specifying the desired SQL expression:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> user = session.CreateCriteria(<span class="keyword">typeof</span> (User))
+    .Add(Expression.Sql(<span class="string">"Username like ? collate Modern_Spanish_CS_AS"</span>, username, NHibernateUtil.String))
+    .UniqueResult&lt;User&gt;();</code></pre>
+<p>This approach has the drawback that you tie your code to SQL Server specifically, and that will give you some headaches if you ever try to target another RDBMS.</p>
+<p>The other (more elegant) option is to subclass the dialect that you are using (in this case MsSql2005Dialect) and register in it a custom function to perform case-sensitive comparisons.</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> CustomMsSqlDialect : MsSql2005Dialect
+{
+    <span class="keyword">public</span> CustomMsSqlDialect()
+    {
+        RegisterFunction(<span class="string">"sensitivelike"</span>,
+            <span class="keyword">new</span> SQLFunctionTemplate(NHibernateUtil.String,
+                <span class="string">"?1 like ?2 collate Modern_Spanish_CS_AS"</span>));
+    }
+}</code></pre>
+<p>Then you can use this new <code>sensitivelike</code> function inside any HQL statement and NHibernate will generate the correct SQL for you.</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> user = session.CreateQuery(<span class="string">"from User u where sensitivelike(u.Username, :username)"</span>)
+    .SetParameter(<span class="string">"username"</span>, username)
+    .UniqueResult&lt;User&gt;();</code></pre>
+<p>This way allows you to support a different RDBMS just by registering the corresponding function implementation in a new derived dialect and without modifying your code.</p>
+<p>Thanks to <a href="http://darioquintana.com.ar/blogging/">Dario</a> for the tip.</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

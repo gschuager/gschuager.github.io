@@ -1,0 +1,132 @@
+<html>
+<head>
+  <title>Moving to WordPress | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Moving to WordPress</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 7 Dec 2010</p>
+
+<div><p>A couple of weeks ago I decided that I would migrate my blog to WordPress, and finally here I am.</p>
+<p>I&#39;m writing this mainly to keep record of my motivations, to describe briefly the steps that I&#39;ve accomplished and maybe to give some tips to anyone who is willing to do the same.</p>
+<h3>Why?</h3>
+<p>A couple of my reasons:</p>
+<ul>
+<li>I got tired of dealing with a formatting issue in Blogger that made my posts look ugly when I post any source code.</li>
+<li>I was hosting a set of static pages (About, Projects, etc) at the root of my domain and I wanted that content to be integrated with the rest of my blog; I didn&#39;t find out (didn&#39;t research much either) how to do this in blogger, but with WP pages this is a standard feature.</li>
+<li>I decided to restyle my blog and it seemed that there were a lot more of options with WP than with Blogger.</li>
+<li>WP admin features and extensibility options looked outstanding (they are indeed).</li>
+</ul>
+<h3>How?</h3>
+<p>I was lucky enough to be using a custom subdomain (blog.schuager.com) instead of using the default Blogger domain (gschuager.blogspot.com); this allowed me to setup WP in another subdomain (blog2.schuager.com) and swap them when I finished.</p>
+<p>The Wordpress installation was very easy. I used this <a href="http://codex.wordpress.org/Installing_WordPress">list</a> as reference.</p>
+<p>After that, I used a <a href="http://wordpress.org/extend/plugins/blogger-importer/">plugin</a> to import all my posts and comments from Blogger.</p>
+<p>I configured my new blog&#39;s permalink options to match the url structure used by blogger and then put <a href="http://codex.wordpress.org/Using_Permalinks#Permalinks_without_mod_rewrite">some code</a> into web.config to tell <a href="http://learn.iis.net/page.aspx/460/using-the-url-rewrite-module/">IIS URL Rewrite</a> to play nice with the new url format.</p>
+<p>Then I moved to the styling phase:</p>
+<ul>
+<li>I tried several themes (there are too many of them), but none of them convinced me as they were.</li>
+<li>I research a little about theme authoring, <a href="http://codex.wordpress.org/Theme_Frameworks">theme frameworks</a>, WP actions and filters, etc.</li>
+<li>I ended up using <a href="http://wordpress.org/extend/themes/wp-framework">WP framework</a> and writing custom a CSS file (and some php code) to adapt the layout to what I was looking for</li>
+<li>Firebug and Chrome developer tools where of great help at this point</li>
+</ul>
+<p>I installed plugins for: syntax highlighting, comments spam filtering, broken links verification, Feedburner feed redirection, Google Analytics integration, etc.</p>
+<p>The final step in my conversion was to review my old posts and update the embedded code to fix the styling issue mentioned above using the syntax highlighter plugin.</p>
+<h3>Conclusion</h3>
+<p>Here are images of the old blog vs the new one for comparison:</p>
+<p><a href="/assets/images/blog-old.jpg"><img src="/assets/images/blog-old.jpg" title="Old blog layout" width="400" height="462"/></a></p>
+<p><a href="/assets/images/blog-new.jpg"><img src="/assets/images/blog-new.jpg" title="New blog layout" width="400" height="522"/></a></p>
+<p>I think I&#39;ve come up with a nice design and I&#39;m very happy with the result 
+All that&#39;s left now is to start bloging more often!</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>

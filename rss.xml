@@ -1,0 +1,598 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title><![CDATA[Germán Schuager's blog]]></title>
+        <description><![CDATA[Germán Schuager's blog]]></description>
+        <link>http://schuager.com</link>
+        <generator>NodeJS RSS Module</generator>
+        <lastBuildDate>Wed, 11 Sep 2013 22:55:49 GMT</lastBuildDate>
+        <atom:link href="http://schuager.com/rss.xml" rel="self" type="application/rss+xml"/>
+        <pubDate>Wed, 11 Sep 2013 22:55:44 GMT</pubDate>
+        <item>
+            <title><![CDATA[CompactContainer rebump]]></title>
+            <description><![CDATA[<p>Almost a year ago I did some experimentation with porting <a href="http://stw.castleproject.org/Windsor.MainPage.ashx">Castle</a> <a href="https://github.com/castleproject/Castle.Windsor">Windsor</a> to be used under the .NET Compact Framework, and while I got it done (excluding several features; mainly everything that has to do with proxys), it was clear that its implementation was not though to be used in a resource-constrained environment.</p>
+<p><img src="/assets/images/container.jpeg" class="align-right" /></p>
+<p>Windsor has lots of functionality that I was wishing to be able to use in some Compact Framework applications, but according to the results of my tests, it was slower and consumed more memory than my own <a href="http://code.google.com/p/compactcontainer/">CompactContainer</a>. Sum that to the fact that Windsor is evolving every day and most of the new stuff use features of .NET that are not available under the Compact Framework, and I had a pretty good reason not go further with this endeavor. </p>
+<p>Considering the previously described experiments I&#39;ve decided to add the features I was needing to <a href="http://code.google.com/p/compactcontainer/">CompactContainer</a>.</p>
+<p>So my first step was to migrate the repository to Mercurial (good: it is so much easy to work with than SVN / bad: you now need a <a href="http://tortoisehg.bitbucket.org/">hg client</a> to get the source code), then I refactored a little the existing code-base and finally I added several new features.</p>
+<p>Here is a list of the major changes and additions:</p>
+<ul>
+<li>Ditched .NET Compact Framework 2.0 support</li>
+<li>Lots of internal refactorings:<ul>
+<li>Changed main namespace from InversionOfControl to CompactContainer</li>
+<li>Renamed IHandler to IActivator (implementors are responsible of instantiating components)</li>
+<li>Removed ComponentList and replaced by IEnumerable<ComponentInfo> and extension methods</li>
+<li>Changed auto registration stuff by implementations of IDiscoveryConvention</li>
+<li>Removed capability to resolve component given its implementation type.</li>
+<li>... several others that I cannot remember right now... (I should really keep a changelog file)</li>
+</ul>
+</li>
+<li>Major new features:<ul>
+<li><strong>Implemented <a href="http://code.google.com/p/compactcontainer/wiki/ComponentsRegistration">programmatic registration</a> heavily based on Castle Windsor API</strong></li>
+<li>Added several <a href="http://code.google.com/p/compactcontainer/wiki/ExtensionPoints">extension points</a>: IActivator, <strong>IDependencyResolver</strong>, <strong>IComponentSelector</strong> and IDiscoveryConvention</li>
+<li>Added property injection support</li>
+<li>Added container events for component registration and component resolution</li>
+<li>Added basic container facilities support (a-la-Windsor)</li>
+<li>Added basic configuration method to be used by IComponentsInstaller and IFacility implementors</li>
+</ul>
+</li>
+</ul>
+<p>Another thing that I&#39;ve done is to remove the binary files available for download... I&#39;ve done this for mainly 2 reasons:</p>
+<ul>
+<li>I don&#39;t have an automated build process, so I needed to remember to make this archive manually in each commit and I always keep forgetting about it (I need to do something about this)</li>
+<li>the existing file was compiled for just one target (Pocket PC 2003 SE Emulator), but most probably you&#39;d need to compile it again for the target platform that you are actually using, so it seems worthless to have to maintain something that in the end it is not going to be used; however, I see in my Google Analytics reports that the binaries were downloaded several times, so I promise to put it up again once I solve the versioning/automation stuff.</li>
+</ul>
+<p>All in all, I&#39;m very happy with the current state of this project and it is actually helping me a lot in some places.</p>
+<p>If you have some comment or suggestion or bug report about CompactContainer, feel free to contact me and let me know!</p>
+]]></description>
+            <link>http://schuager.com/2011/01/compactcontainer-rebump.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2011/01/compactcontainer-rebump.html            </guid>
+            <pubDate>Sat, 08 Jan 2011 18:37:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Deferred execution based on PropertyChanged]]></title>
+            <description><![CDATA[<p>A few days ago I was implementing toast notifications for a Silverlight application (SL 4 has support for toast notifications but it is only available to out-of-browser applications) and one of the features that I wanted to implement was that the notification doesn&#39;t go away while the user holds the mouse pointer over it - pretty much like Tweetdeck notifications.</p>
+<p>The idea was that I&#39;d start a timer when the notification is shown and when it times out, if the mouse pointer wasn&#39;t over the notification window it would fade out, but if the mouse was indeed over the notification, I&#39;d hook into the MouseLeave event to defer hiding the notification until that event was triggered.</p>
+<p>Since I was using the MVVM pattern, rather than handling this in code-behind and attaching directly to the MouseLeave event I had a ViewModel bound to the notification view (UserControl) with a property called IsMouseOver (in the sample application I update this property directly from the events handler in code-behind, but in my actual application I&#39;m using Caliburn and doing all this using its <a href="http://caliburn.codeplex.com/wikipage?title=Action%20Basics&amp;referringTitle=Documentation">Actions</a> feature).</p>
+<p>So, the code for the timer tick handler was something like this:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">if</span> (!IsMouseOver)
+{
+    RequestClose();
+}
+<span class="keyword">else</span>
+{
+    Observable.FromEvent&lt;PropertyChangedEventArgs&gt;(<span class="keyword">this</span>, <span class="string">"PropertyChanged"</span>)
+        .Where(ev =&gt; ev.EventArgs.PropertyName == <span class="string">"IsMouseOver"</span> &amp;&amp; !((NotificationViewModel)ev.Sender).IsMouseOver)
+        .Subscribe(<span class="keyword">delegate</span> { RequestClose(); });
+}</code></pre>
+<p>Notice that here I used Rx (because I already had the reference) to hook to the PropertyChanged event of the notification ViewModel to monitor the IsMouseOver property value and trigger the closing of the notification when it becomes false.</p>
+<p>At the time of writing, that was the easiest way to accomplish the requirement, but it sparked a light in my head and made me think about which would be the ideal syntax for that code... and I always end up thinking about something like this:</p>
+<pre class="highlighted"><code class="cs">Execute.NowOrWhenBecomesTrue(() =&gt; IsMouseOver == <span class="keyword">false</span>, () =&gt; RequestClose());</code></pre>
+<p>So, now after a quite lengthy intro I want to show you how did I implement this method:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> Execute
+{
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">readonly</span> ExpressionType[] ValidExpressionTypes =
+        <span class="keyword">new</span>[]
+            {
+                ExpressionType.Equal, ExpressionType.NotEqual,
+                ExpressionType.GreaterThan,
+                ExpressionType.GreaterThanOrEqual,
+                ExpressionType.LessThan,
+                ExpressionType.LessThanOrEqual
+            };
+
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> NowOrWhenBecomesTrue(Expression&lt;Func&lt;<span class="keyword">bool</span>&gt;&gt; condition, Action action)
+    {
+        <span class="keyword">var</span> compiledCondition = condition.Compile();
+
+        <span class="keyword">if</span> (compiledCondition())
+        {
+            action();
+            <span class="keyword">return</span>;
+        }
+
+        <span class="keyword">var</span> binaryExpression = condition.Body <span class="keyword">as</span> BinaryExpression;
+        <span class="keyword">if</span> (binaryExpression == <span class="keyword">null</span>)
+            <span class="keyword">throw</span> <span class="keyword">new</span> ArgumentException(<span class="string">"must be a binary expression"</span>, <span class="string">"condition"</span>);
+
+        <span class="keyword">if</span> (ValidExpressionTypes.Any(t =&gt; t == binaryExpression.NodeType) == <span class="keyword">false</span>)
+            <span class="keyword">throw</span> <span class="keyword">new</span> ArgumentException(<span class="string">"expression is invalid, it must be ==, !=, &gt;, &gt;=, &lt; or &lt;="</span>);
+
+        <span class="keyword">var</span> memberExpression = binaryExpression.Left <span class="keyword">as</span> MemberExpression;
+        <span class="keyword">if</span> (memberExpression == <span class="keyword">null</span>)
+            <span class="keyword">throw</span> <span class="keyword">new</span> ArgumentException(<span class="string">"left side of expression must be a property access"</span>, <span class="string">"condition"</span>);
+
+        <span class="keyword">var</span> propertyName = memberExpression.Member.Name;
+
+        <span class="keyword">var</span> inpc = GetHostFromExpression(memberExpression.Expression) <span class="keyword">as</span> INotifyPropertyChanged;
+        <span class="keyword">if</span> (inpc == <span class="keyword">null</span>)
+            <span class="keyword">throw</span> <span class="keyword">new</span> ArgumentException(<span class="string">"cannot determine INotifyPropertyChanged implementor to watch"</span>, <span class="string">"condition"</span>);
+
+        PropertyChangedEventHandler handler = <span class="keyword">null</span>;
+        handler = (s, e) =&gt;
+                    {
+                        <span class="keyword">if</span> (e.PropertyName == propertyName)
+                          {
+                            <span class="keyword">if</span> (compiledCondition())
+                            {
+                                action();
+                                inpc.PropertyChanged -= handler;
+                            }
+                          }
+                    };
+
+        inpc.PropertyChanged += handler;
+    }
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">object</span> GetHostFromExpression(Expression expression)
+    {
+        <span class="keyword">if</span> (expression.NodeType == ExpressionType.Constant)
+            <span class="comment">// case with "this" pointer</span>
+            <span class="keyword">return</span> ((ConstantExpression)expression).Value;
+
+        <span class="keyword">if</span> (expression.NodeType == ExpressionType.MemberAccess)
+            <span class="comment">// case when accessing a property of an object other than "this"</span>
+            <span class="keyword">return</span> GetObjectFromMemberExpression((MemberExpression)expression);
+
+        <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">object</span> GetObjectFromMemberExpression(MemberExpression memberExpression)
+    {
+        <span class="keyword">var</span> memberAccessor = memberExpression.Member;
+        <span class="keyword">var</span> host = GetHostFromExpression(memberExpression.Expression);
+        <span class="keyword">return</span> host == <span class="keyword">null</span> ? <span class="keyword">null</span> : GetObjectFromMember(memberAccessor, host);
+    }
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">object</span> GetObjectFromMember(MemberInfo memberInfo, <span class="keyword">object</span> host)
+    {
+        <span class="keyword">switch</span> (memberInfo.MemberType)
+        {
+            <span class="keyword">case</span> (MemberTypes.Property):
+                <span class="keyword">return</span> ((PropertyInfo) memberInfo).GetValue(host, <span class="keyword">null</span>);
+            <span class="keyword">case</span> (MemberTypes.Field):
+                <span class="keyword">return</span> ((FieldInfo) memberInfo).GetValue(host);
+        }
+        <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+}</code></pre>
+<p>The main idea is that it takes a the left hand side expression of <a href="http://msdn.microsoft.com/en-us/library/system.linq.expressions.binaryexpression.aspx">BinaryExpression</a>, gets the name of the property that needs to be watched and tries to get the object instance that contains that property; it then hooks a handler for its PropertyChanged event where the expression is evaluated and based on its result the required action is executed; it then unhook the delegate to prevent further executions.</p>
+<p>While the implementation is not perfect, it provides the desired functionality and some more:</p>
+<ul>
+<li>it works on &quot;this&quot; class&#39; properties</li>
+<li>it works on nested properties: if you have a property (or field) that implements INotifyPropertyChange you can attach to one of its properties too</li>
+<li>the expression comparison can be any of these: ==, !=, &lt;, &lt;=, &gt;, &gt;=</li>
+</ul>
+<p>A simple &quot;notifications&quot; sample application using this helper can be found <a href="/assets/attachments/NotificationsDemo.7z&#39;">here</a></p>
+<p>As a side note, I think that this is one piece of code that can benefit from the deployment method that <a href="http://www.clariusconsulting.net/blogs/kzu/">Daniel</a> describes <a href="http://www.clariusconsulting.net/blogs/kzu/archive/2010/12/08/HowtocreatelightweightreusablesourcecodewithNuGet.aspx">here</a>.</p>
+]]></description>
+            <link>http://schuager.com/2010/12/deferred-execution-based-on-propertychanged.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2010/12/deferred-execution-based-on-propertychanged.html            </guid>
+            <pubDate>Mon, 13 Dec 2010 05:51:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Moving to WordPress]]></title>
+            <description><![CDATA[<p>A couple of weeks ago I decided that I would migrate my blog to WordPress, and finally here I am.</p>
+<p>I&#39;m writing this mainly to keep record of my motivations, to describe briefly the steps that I&#39;ve accomplished and maybe to give some tips to anyone who is willing to do the same.</p>
+<h3>Why?</h3>
+<p>A couple of my reasons:</p>
+<ul>
+<li>I got tired of dealing with a formatting issue in Blogger that made my posts look ugly when I post any source code.</li>
+<li>I was hosting a set of static pages (About, Projects, etc) at the root of my domain and I wanted that content to be integrated with the rest of my blog; I didn&#39;t find out (didn&#39;t research much either) how to do this in blogger, but with WP pages this is a standard feature.</li>
+<li>I decided to restyle my blog and it seemed that there were a lot more of options with WP than with Blogger.</li>
+<li>WP admin features and extensibility options looked outstanding (they are indeed).</li>
+</ul>
+<h3>How?</h3>
+<p>I was lucky enough to be using a custom subdomain (blog.schuager.com) instead of using the default Blogger domain (gschuager.blogspot.com); this allowed me to setup WP in another subdomain (blog2.schuager.com) and swap them when I finished.</p>
+<p>The Wordpress installation was very easy. I used this <a href="http://codex.wordpress.org/Installing_WordPress">list</a> as reference.</p>
+<p>After that, I used a <a href="http://wordpress.org/extend/plugins/blogger-importer/">plugin</a> to import all my posts and comments from Blogger.</p>
+<p>I configured my new blog&#39;s permalink options to match the url structure used by blogger and then put <a href="http://codex.wordpress.org/Using_Permalinks#Permalinks_without_mod_rewrite">some code</a> into web.config to tell <a href="http://learn.iis.net/page.aspx/460/using-the-url-rewrite-module/">IIS URL Rewrite</a> to play nice with the new url format.</p>
+<p>Then I moved to the styling phase:</p>
+<ul>
+<li>I tried several themes (there are too many of them), but none of them convinced me as they were.</li>
+<li>I research a little about theme authoring, <a href="http://codex.wordpress.org/Theme_Frameworks">theme frameworks</a>, WP actions and filters, etc.</li>
+<li>I ended up using <a href="http://wordpress.org/extend/themes/wp-framework">WP framework</a> and writing custom a CSS file (and some php code) to adapt the layout to what I was looking for</li>
+<li>Firebug and Chrome developer tools where of great help at this point</li>
+</ul>
+<p>I installed plugins for: syntax highlighting, comments spam filtering, broken links verification, Feedburner feed redirection, Google Analytics integration, etc.</p>
+<p>The final step in my conversion was to review my old posts and update the embedded code to fix the styling issue mentioned above using the syntax highlighter plugin.</p>
+<h3>Conclusion</h3>
+<p>Here are images of the old blog vs the new one for comparison:</p>
+<p><a href="/assets/images/blog-old.jpg"><img src="/assets/images/blog-old.jpg" title="Old blog layout" width="400" height="462"/></a></p>
+<p><a href="/assets/images/blog-new.jpg"><img src="/assets/images/blog-new.jpg" title="New blog layout" width="400" height="522"/></a></p>
+<p>I think I&#39;ve come up with a nice design and I&#39;m very happy with the result 
+All that&#39;s left now is to start bloging more often!</p>
+]]></description>
+            <link>http://schuager.com/2010/12/moving-to-wordpress.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2010/12/moving-to-wordpress.html            </guid>
+            <pubDate>Wed, 08 Dec 2010 01:07:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Contextual Lifestyle Reloaded]]></title>
+            <description><![CDATA[<p>Some time ago I did some experimentation with a custom Castle Windsor lifestyle under the main motivation of coming up with a way for managing the NHibernate session in a fat client application.</p>
+<p>After I posted <a href="http://blog.schuager.com/2008/11/custom-windsor-lifestyle.html">my findings</a> on that matter I have continued spiking a cleaner solution and I&#39;ve came up with something worth sharing again; but this time, rather than posting the code here, I preferred to share it in a more visible and maintainable place, so I asked <a href="http://bugsquash.blogspot.com/">Mauricio</a> if he was willing to include it in the Castle.Windsor.Lifestyles contrib project on github and he certainly did that (after reviewing my implementation and adding code for coping with components release - thanks Mauricio!)</p>
+<p>As explained in my previous post about this matter, the idea of this lifestyle is to be able to define a context (or scope) in which the container will resolve always the same instance of a given component and when asking for the same component outside of that context, a new instance will be created.</p>
+<p>One of the main changes from my previous attempt is that before I used an implicit delimitation of the context based on &quot;a single call to container.Resolve&quot;, but since then I&#39;ve found that that strategy was rather limiting, so in this new implementation, the context can be explicitly defined by the <code>ContainerContext</code> class; although it is worth noting that the implicit delimitation of contexts can still be used in this new implementation.</p>
+<p>To better describe the intended behavior, I’m including here a few tests that I think that should help make my intention clearer:</p>
+<pre class="highlighted"><code class="cs">[Test]
+<span class="keyword">public</span> <span class="keyword">void</span> Should_resolve_the_same_instances_when_inside_the_same_context()
+{
+    kernel.Register(Component.For&lt;ComponentA&gt;().LifeStyle.Custom(<span class="keyword">typeof</span>(ContextualLifestyle)));
+    <span class="keyword">using</span> (<span class="keyword">new</span> ContainerContext(kernel))
+    {
+        <span class="keyword">var</span> c1 = kernel.Resolve&lt;ComponentA&gt;();
+        <span class="keyword">var</span> c2 = kernel.Resolve&lt;ComponentA&gt;();
+        Assert.That(c1, Is.SameAs(c2));
+    }
+}
+
+[Test]
+<span class="keyword">public</span> <span class="keyword">void</span> Should_resolve_different_instances_when_inside_different_contexts()
+{
+    kernel.Register(Component.For&lt;ComponentA&gt;().LifeStyle.Custom(<span class="keyword">typeof</span>(ContextualLifestyle)));
+
+    ComponentA c1, c2;
+    <span class="keyword">using</span> (<span class="keyword">new</span> ContainerContext(kernel))
+    {
+        c1 = kernel.Resolve&lt;ComponentA&gt;();
+    }
+    <span class="keyword">using</span> (<span class="keyword">new</span> ContainerContext(kernel))
+    {
+        c2 = kernel.Resolve&lt;ComponentA&gt;();
+    }
+
+    Assert.That(c1, Is.Not.SameAs(c2));
+}
+
+[Test]
+<span class="keyword">public</span> <span class="keyword">void</span> Should_implicitly_initialize_a_new_context_when_there_is_none_created()
+{
+    kernel.Register(Component.For&lt;ComponentA&gt;().LifeStyle.Custom(<span class="keyword">typeof</span>(ContextualLifestyle)));
+
+    <span class="keyword">var</span> c1 = kernel.Resolve&lt;ComponentA&gt;();
+    <span class="keyword">var</span> c2 = kernel.Resolve&lt;ComponentA&gt;();
+    Assert.That(c1, Is.Not.SameAs(c2));
+}</code></pre>
+<p>This lifestyle is supposed to work with nested dependencies, generic components, and in multithreaded scenarios, so if you use it and find anything wrong with it, please let me know.</p>
+<p>You can get the code from here: <a href="https://github.com/castleprojectcontrib/Castle.Windsor.Lifestyles">https://github.com/castleprojectcontrib/Castle.Windsor.Lifestyles</a></p>
+]]></description>
+            <link>http://schuager.com/2010/11/contextual-lifestyle-reloaded.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2010/11/contextual-lifestyle-reloaded.html            </guid>
+            <pubDate>Sun, 28 Nov 2010 00:22:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[How to setup Mercurial server on Windows/IIS]]></title>
+            <description><![CDATA[<p>In this post I will enumerate the resources and the steps required to setup a Mercurial server under a Windows environment running on top of IIS 7.</p>
+<p>This is not as straight-forward as it should be but it is not very difficult either.</p>
+<p>You will need to download the following:</p>
+<ul>
+<li>Mercurial 1.5.1 <a href="http://bitbucket.org/tortoisehg/thg-winbuild/downloads/mercurial-1.5.1.msi">http://bitbucket.org/tortoisehg/thg-winbuild/downloads/mercurial-1.5.1.msi</a></li>
+<li>Python 2.6 <strong>x86 installer</strong> <a href="http://www.python.org/download/releases/2.6/">http://www.python.org/download/releases/2.6/</a><ul>
+<li>if you use another version of Python you will probably end up with a <em>&quot;Bad magic number&quot;</em> error, as pointed by Lloyd in the comments</li>
+<li>if you use the x64 version you will get some other error messages and hg will not work</li>
+</ul>
+</li>
+<li>hgwebdir.cgi <a href="http://selenic.com/repo/hg/raw-file/ff2704a8ded3/hgwebdir.cgi">http://selenic.com/repo/hg/raw-file/ff2704a8ded3/hgwebdir.cgi</a></li>
+<li>IIS UrlRewriter module <a href="http://www.iis.net/expand/URLRewrite">http://www.iis.net/expand/URLRewrite</a> (optional but very recommended)</li>
+</ul>
+<p>I will split the configuration steps into setting up the file system and configuring IIS.</p>
+<h3>Setting up the file system</h3>
+<p><strong>1.</strong> Install Mercurial. <em>I will assume the default install path: C:\Program Files (x86)\Mercurial</em></p>
+<p><strong>2.</strong> Install Python. <em>I will assume the default install path: C:\Python26</em></p>
+<p><strong>3.</strong> Create a folder for your Hg web application. <em>I will assume this path: C:\hg</em></p>
+<p><strong>4.</strong> Create a subfolder called lib and uncompress the contents of the file C:\Program Files (x86)\Mercurial\library.zip into C:\hg\lib</p>
+<p><strong>5.</strong> Copy the folder C:\Program Files (x86)\Mercurial\Templates into c:\hg\lib</p>
+<p>At this point you should have something like this:</p>
+<p><img src="/assets/images/hgiis1.png" alt="folder structure"></p>
+<p><strong>6.</strong> Copy the hgwebdir.cgi (link at the top of the post) file into your wep app folder root c:\hg and modify it so that it match your Python installation folder and your lib folder. Using my current path assumptions you should end with something like the one in the left of the following picture:</p>
+<p><img src="/assets/images/hgiis2.png" alt="hgwebdir.cgi changes"></p>
+<p><strong>7.</strong> Create a folder named repos in c:\hg\repos. This folder will contain all our mercurial repositories. For testing purposed now we will create a test repository inside there; just run this from the command line &quot;hg init c:\hg\repos\test&quot; (this will create and initialize the test repository)</p>
+<p><strong>8.</strong> Create a file named hgweb.config at c:\hg\hgweb.config with the following content:</p>
+<pre class="highlighted"><code class="haskell">[paths]
+/ = repos/*
+
+[web]
+<span class="title">baseurl</span> = /hg
+<span class="title">push_ssl</span> = false
+<span class="title">allow_push</span> = *</code></pre>
+<p>here we are telling Mercurial basically 3 things: where are the repositories that it should serve, everybody can push, and it should allow pushes through non-secure connections (so we don&#39;t need to setup https)</p>
+<h3>Configuring IIS</h3>
+<p><strong>9.</strong> Add a new web application to your &quot;Default Web Site&quot;, name it &quot;hg&quot; and assign &quot;c:\hg&quot; to its Physical path.</p>
+<p><img src="/assets/images/hgiis3.png" alt="iis new application"></p>
+<p><strong>10.</strong> Now we need to configure our newly created app to be able to execute Python scripts. Click on the &quot;Handler Mappings&quot;</p>
+<p><img src="/assets/images/hgiis4.png" alt="iis handler mappings"></p>
+<p>then in &quot;Add Script Map...&quot; from the right menu</p>
+<p><img src="/assets/images/hgiis5.png" alt="iis add script map"></p>
+<p>and then enter the script extension and Python executable path as shown in the following picture:</p>
+<p><img src="/assets/images/hgiis6.png" alt="iis script map dialog"></p>
+<p><strong>11.</strong> The final step is to configure Url Rewriter module correctly to allow us to use our repository with a nice URL like this: <a href="http://server/hg/test">http://server/hg/test</a> instead of <a href="http://server/hg/hgwebdir.cgi/test">http://server/hg/hgwebdir.cgi/test</a>. For this you need to install the Url Rewriter module either using Web Platform installer or by manually doing so (link at the top of the post).</p>
+<p>Once you have Url Rewriter installed, select it from you application Feature View:</p>
+<p><img src="/assets/images/hgiis7.png" alt="iis url rewrite"></p>
+<p>then click on the &quot;Add Rules...&quot; action from the right side panel and select &quot;Blank Rule&quot;:</p>
+<p><img src="/assets/images/hgiis8.png" alt="iis add rules"></p>
+<p>and enter the new rule data as shown in the following picture:</p>
+<p><img src="/assets/images/hgiis9.png" alt="iis rule screen"></p>
+<p>And that should be all.</p>
+<p>Now try to navigate to <a href="http://localhost/hg">http://localhost/hg</a> with your browser and you should see something like this:</p>
+<p><img src="/assets/images/hgiis10.png" alt="hg web"></p>
+<p>Just remember to setup authentication if you are going to use this server over the internet. I left this to you since you can use any of the standard IIS authentication methods available.</p>
+]]></description>
+            <link>http://schuager.com/2010/03/how-to-setup-mercurial-server-on.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2010/03/how-to-setup-mercurial-server-on.html            </guid>
+            <pubDate>Fri, 19 Mar 2010 22:39:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[NAnt task for getting Mercurial current revision]]></title>
+            <description><![CDATA[<p>As part of my continuous integration process I like to get the current VCS revision and stick it somewhere in the build output (almost always to be displayed in some kind of &quot;About&quot; screen)</p>
+<p>When using Mercurial in combination with NAnt, you can do this as follows:</p>
+<pre class="highlighted"><code class="xml"><span class="tag">&lt;<span class="title">property</span> <span class="attribute">name</span>=<span class="value">"hg.revision.hash"</span> <span class="attribute">value</span>=<span class="value">"N/A"</span> /&gt;</span>
+
+<span class="tag">&lt;<span class="title">target</span> <span class="attribute">name</span>=<span class="value">"common.find-hginfo"</span>&gt;</span>
+   <span class="tag">&lt;<span class="title">property</span> <span class="attribute">name</span>=<span class="value">"vcs.revision"</span> <span class="attribute">value</span>=<span class="value">"0"</span> <span class="attribute">overwrite</span>=<span class="value">"false"</span> /&gt;</span>
+   <span class="tag">&lt;<span class="title">exec
+</span>       <span class="attribute">program</span>=<span class="value">"hg"</span>
+       <span class="attribute">commandline</span>=<span class="value">'parents --template="{node|short}"'</span>
+       <span class="attribute">output</span>=<span class="value">"_revision.txt"</span>
+       <span class="attribute">failonerror</span>=<span class="value">"false"</span>/&gt;</span>
+   <span class="tag">&lt;<span class="title">loadfile</span> <span class="attribute">file</span>=<span class="value">"_revision.txt"</span>
+             <span class="attribute">property</span>=<span class="value">"hg.revision.hash"</span> /&gt;</span>
+   <span class="tag">&lt;<span class="title">property</span> <span class="attribute">name</span>=<span class="value">"hg.revision.hash"</span> <span class="attribute">value</span>=<span class="value">"${string::trim(hg.revision.hash)}"</span> /&gt;</span>
+   <span class="tag">&lt;<span class="title">delete</span> <span class="attribute">file</span>=<span class="value">"_revision.txt"</span> <span class="attribute">failonerror</span>=<span class="value">"false"</span> /&gt;</span>
+   <span class="tag">&lt;<span class="title">echo</span> <span class="attribute">message</span>=<span class="value">"INFO: Using Hg revision: ${hg.revision.hash}"</span>/&gt;</span>
+<span class="tag">&lt;/<span class="title">target</span>&gt;</span></code></pre>
+<p>Just put this target as a dependency somewhere else and use the property &quot;hg.revision.hash&quot; as you see fit.</p>
+]]></description>
+            <link>http://schuager.com/2010/03/nant-task-for-getting-mercurial-current.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2010/03/nant-task-for-getting-mercurial-current.html            </guid>
+            <pubDate>Tue, 16 Mar 2010 15:58:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Case-sensitive queries in NHibernate using SQL Server]]></title>
+            <description><![CDATA[<p>Depending on the collation setting of your database (you probably already know this) the queries that you issue against it are treated as case-insensitive (CI collations) or as case-sensitive (CS collations).</p>
+<p>If your database use a CI collation and you need to do some case-sensitive querying, the target SQL statement would be something like this:</p>
+<pre class="highlighted"><code class="sql"><span class="operator"><span class="keyword">SELECT</span> u.Name
+<span class="keyword">FROM</span> Users u
+<span class="keyword">WHERE</span> u.Name <span class="keyword">like</span> <span class="string">'SomeName'</span> <span class="keyword">COLLATE</span> Modern_Spanish_CS_AS</code></pre>
+<p>Now, if you are using NHibernate you can do some things to make it help you issuing this kind of query.</p>
+<p>The first one is to just use the Criteria API specifying the desired SQL expression:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> user = session.CreateCriteria(<span class="keyword">typeof</span> (User))
+    .Add(Expression.Sql(<span class="string">"Username like ? collate Modern_Spanish_CS_AS"</span>, username, NHibernateUtil.String))
+    .UniqueResult&lt;User&gt;();</code></pre>
+<p>This approach has the drawback that you tie your code to SQL Server specifically, and that will give you some headaches if you ever try to target another RDBMS.</p>
+<p>The other (more elegant) option is to subclass the dialect that you are using (in this case MsSql2005Dialect) and register in it a custom function to perform case-sensitive comparisons.</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> CustomMsSqlDialect : MsSql2005Dialect
+{
+    <span class="keyword">public</span> CustomMsSqlDialect()
+    {
+        RegisterFunction(<span class="string">"sensitivelike"</span>,
+            <span class="keyword">new</span> SQLFunctionTemplate(NHibernateUtil.String,
+                <span class="string">"?1 like ?2 collate Modern_Spanish_CS_AS"</span>));
+    }
+}</code></pre>
+<p>Then you can use this new <code>sensitivelike</code> function inside any HQL statement and NHibernate will generate the correct SQL for you.</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> user = session.CreateQuery(<span class="string">"from User u where sensitivelike(u.Username, :username)"</span>)
+    .SetParameter(<span class="string">"username"</span>, username)
+    .UniqueResult&lt;User&gt;();</code></pre>
+<p>This way allows you to support a different RDBMS just by registering the corresponding function implementation in a new derived dialect and without modifying your code.</p>
+<p>Thanks to <a href="http://darioquintana.com.ar/blogging/">Dario</a> for the tip.</p>
+]]></description>
+            <link>http://schuager.com/2009/06/case-sensitive-queries-in-nhibernate.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2009/06/case-sensitive-queries-in-nhibernate.html            </guid>
+            <pubDate>Fri, 19 Jun 2009 17:21:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Introducing NLaunch]]></title>
+            <description><![CDATA[<p>In the last month I&#39;ve been working in several desktop applications and faced the situation of having to remotely update my clients machines repeatedly. It is not fun. The process that I was using for accomplish this task was the following:</p>
+<ol>
+<li>build the application locally (I&#39;m not using CI)</li>
+<li>upload the result somewhere (ftp, Mediafire, etc.)</li>
+<li>notify the client that I will be logging in to do some work</li>
+<li>log in remotely using Remote Desktop or <a href="http://logmein.com/">LogMeIn</a> (great tool BTW)</li>
+<li>backup the current running version (just in case)</li>
+<li>download and install the new version</li>
+</ol>
+<p>I can tell you that it takes a lot of time to do these simple steps (and it is boring as hell) so I&#39;ve decided to do something about it... I automated it.</p>
+<p>The first thing that I&#39;ve done is to evaluate the existing tools for this job. Here are some of them:</p>
+<h4><a href="http://msdn.microsoft.com/en-us/library/wh45kb66.aspx">Clickonce</a></h4>
+<p>I had spent almost 3 non-consecutive days trying to integrate Clickonce deployment into my nant build scripts and I had failed; besides this, along the way I’ve discovered some limitations of Clickonce that made me look in other direction:</p>
+<ul>
+<li>Target directory can&#39;t be specified, it will always deploy to the Clickonce cache</li>
+<li>Not easy to deploy updates without running through the whole workflow (signing, uploading, etc). This means that you can&#39;t just recompile and xcopy the files to the target system (this is useful when you are at the client site).</li>
+<li>Complex. Application manifest, deployment manifest, signing, mage (some things can be only done through mageui), etc, etc.</li>
+</ul>
+<h4><a href="http://msdn.microsoft.com/en-us/library/ms978545.aspx">Updater Application Block</a></h4>
+<p>It has lots of functionalities, extensibility points and configuration options but it seems too big for my needs. I was looking for something simpler that just works with almost no configuration.</p>
+<h4><a href="http://windowsclient.net/articles/appupdater.aspx">.NET Application Updater Component</a></h4>
+<p>Not looked at this enough. It is bundled as a component that must be dragged into a form of your application (didn’t liked that)</p>
+<hr>
+<h3>NLaunch</h3>
+<p>Anyway... those were some of the existing options, but I was looking for something a lot simpler, something that I hadn&#39;t found, so I decided to write it myself.</p>
+<p>My two main requirements were:</p>
+<ul>
+<li>Dead simple: it must consist of a single executable file and maybe some configuration.</li>
+<li>Unobtrusive: it must not require to add anything to the target application, it should work on its own.</li>
+</ul>
+<p>The simplicity requirement have taken me to make a lot of assumptions and to apply some conventions (a good thing as long as they are documented) that may not apply in everyone&#39;s scenario, for this reason, I&#39;ve created several interfaces first and then developed its implementations to fulfill my requirements; this would allow anyone to easily replace some of my implementations with its owns in order to adjust NLaunch behavior. Right now it is not easily extensible without requiring source code modification, but I plan to fix that in the future.</p>
+<p>Now with NLaunch my deployment process is reduced to this:</p>
+<ol>
+<li>Build the application locally and upload the results to an FTP server (all with just 2 clicks)</li>
+</ol>
+<p>I can&#39;t say that this is actually fun, but at least is it neither boring nor tiresome... because I don&#39;t have to DO anything! :)</p>
+<p>Well, enough writing for now, you can check out the project&#39;s home page for a little more specific information and you can also download the source code (it is really simple) or a ready-to-work binary.</p>
+<p><a href="http://code.google.com/p/nlaunch/">http://code.google.com/p/nlaunch/</a></p>
+]]></description>
+            <link>http://schuager.com/2009/04/introducing-nlaunch.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2009/04/introducing-nlaunch.html            </guid>
+            <pubDate>Wed, 29 Apr 2009 17:58:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Rich-client NHibernate session management]]></title>
+            <description><![CDATA[<p>I&#39;ve been struggling with this subject for quite some time now, and I&#39;ve just seem to found the <a href="http://fgheysels.blogspot.com/2008/07/nhibernate-session-management.html">&#39;sweet spot&#39;</a>.</p>
+<p>Before we start, I need to describe some facts about the target application:</p>
+<ul>
+<li>rich-client: this approach will work the same for a Winform application as for a WPF application.</li>
+<li>multi-screen UI: it could be multi-form or tabbed or MDI... the important thing here is that you &quot;will&quot; have several screens opened at the same time.</li>
+<li>application uses an Inversion of Control container for wiring up dependencies among other useful things (I&#39;m using Castle Windsor/Microkernel)</li>
+</ul>
+<p>Ok.</p>
+<p>Before we continue, I recommend that you read the work of <a href="http://stalamoni.blogspot.com/2007/12/nhibernate-and-winforms-article-1st.html">Sebastian Talamoni</a>, that although not finished yet, covers a lot of ground.</p>
+<p>Basically there are 4 options for NH session management on a rich-client environment:</p>
+<ol>
+<li><p>Session per application (per thread)</p>
+<ul>
+<li>the simplest approach</li></li>
+<li>only 1 session opened for the whole application lifecycle</li>
+<li>lots of problems: cache size, stale data due to other users, unrecoverable exception, etc.</li>
+<li><a href="http://fabiomaulo.blogspot.com/">Fabio Maulo</a> calls this pattern TIME BOMB</li>
+</ul>
+</li>
+<li><p>Session per screen</p>
+<ul>
+<li>1 session opened for each form/tab/view/whatever</li>
+<li>implies multiple concurrent sessions</li>
+<li>since a single screen could be left opened for quite some time, this approach is almost equally susceptible to stale data as the previous one</li>
+</ul>
+</li>
+<li><p>Every data access - Fine-grained sessions</p>
+<ul>
+<li>every repository/DAO opens and closes a new session each time that a DB access is requested.</li>
+<li>loss of some useful NH features like lazy loading and 1st level cache... not worth it.</li>
+</ul>
+</li>
+<li><p>Session per use-case</p>
+<ul>
+<li>also implies multiple concurrent sessions</li>
+<li>this seems to be the right choice, however it is the most difficult to implement</li>
+</ul>
+</li>
+</ol>
+<h3>Per-thread session management</h3>
+<p>Options 1 and 3 are easily implemented using some kind of thread-static session manager. Examples of this are <a href="http://ayende.com/wiki/Rhino%20Commons.ashx">Rhino.Commons</a> and <a href="http://castleproject.org/container/facilities/trunk/nhibernate/index.html">Castle NHibernate Integration Facility</a>.</p>
+<p>Each repository/DAO gets an instance of the a global &quot;session manager&quot; and uses it to get hold of the right session:</p>
+<ul>
+<li>if 1 session per application is used, this &quot;global&quot; session is return by each call to SessionManager.OpenSession()</li>
+<li>if fine-grained sessions are used there are two possibilities:<ul>
+<li>we are in the scope of another session... the outer session is returned</li>
+<li>we are not in the scope of another session... a new one is created</li>
+</ul>
+</li>
+</ul>
+<p>The easy thing about this is that each repository/DAO can access to the &quot;session manager&quot; through some static accessor, or even better, they can receive a singleton (as in singleton lifestyle) instance as a parameter of its constructor, which enable us to use an Inversion of Control container to wire up these dependencies and ease the unit testing of these components (no statics = easier testing).</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> Presenter {
+
+   <span class="keyword">private</span> IBlogRepository blogRepository;
+
+   <span class="keyword">public</span> Presenter(IView view, IBlogRepository blogRepository)
+   {
+       <span class="keyword">this</span>.blogRepository = blogRepository;
+   }
+
+   ...
+
+}
+
+<span class="keyword">public</span> <span class="keyword">class</span> BlogRepository : IBlogRepository
+
+   <span class="keyword">private</span> ISessionManager sessionManager;
+
+   <span class="keyword">public</span> BlogRepository(ISessionManager sessionManager)
+   {
+       <span class="keyword">this</span>.sessionManager = sessionManager;
+   }
+
+   <span class="keyword">public</span> Blog Get(<span class="keyword">int</span> id)
+   {
+       <span class="keyword">using</span> (ISession session = sessionManager.OpenSession()) {
+           <span class="keyword">return</span> session.Get&lt;Blog&gt;(id);
+       }
+   }
+}</code></pre>
+<p>This pattern is suitable for a web application, where the context is usually given by the current request, but in a rich-client application it would imply that two opened screens (different contexts) would share the same session manager and therefore the same session when they intend to do some data access at the same time.</p>
+<h3>Contextual session management</h3>
+<p>Options 2 and 4 require another approach since they imply several simultaneous sessions through the lifecycle of the application. We can no longer have a static or singleton session storage from where to get the right session for each thread... we need some kind of &quot;contextual session management&quot; where each screen/use-case is treated as a different context and provided with sessions accordingly.</p>
+<p>This don&#39;t seem so hard, right? We can just do something like this for option 4:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">public</span> <span class="keyword">class</span> Presenter {
+   <span class="keyword">private</span> ISessionManager sessionManager;
+   <span class="keyword">private</span> IBlogRepository blogRepository;
+
+   <span class="keyword">public</span> Presenter(IView view)
+   {
+       sessionManager = SessionManagerFactory.CreateNewContext();
+       blogRepository = <span class="keyword">new</span> BlogRepository(sessionManager);
+   }
+}</code></pre>
+<p>The implementation of BlogRepository in this case is the same as before.</p>
+<p>At first sight this seems like a nice way to define contexts, but that is until you realize that you are making very hard to unit test this class (hardcoded dependencies) and you are neglecting the help of the IoC container to wire up things.</p>
+<p>Imagine that now, instead of BlogRepository we need something like AggregatorService that depends on BlogRepository, UserRepository and CommentService, and CommentService depends on UserRepository and CommentRepository. In this case, you&#39;d need to create the session manager and then to instantiate every one of this components passing the right arguments to them.... this seems too much work for me.</p>
+<p>Managing the dependencies yourself is not fun, and your IoC container enjoys doing it for you anyway.</p>
+<p>Maybe something can be done using some kind of service location and passing the current context down the chain, like this:</p>
+<pre class="highlighted"><code class="cs">container.Resolve&lt;IBlogRepository&gt;(With.Dependency&lt;ISessionManager&gt;(sessionManager)); <span class="comment">// imaginary syntax</span>
+container.Resolve&lt;IAggregatorService&gt;(With.Dependency&lt;ISessionManager&gt;(sessionManager)); <span class="comment">// imaginary syntax</span></code></pre>
+<p>but there is an easier way, let me introduce you to the...</p>
+<h3>Contextual Session Manager</h3>
+<p>This is an extension to the NHibernate Integration Facility of the Castle project that allows me to control the scope of my session and do not impose a global per-thread scope.</p>
+<p>The solution is integrated by the following components:</p>
+<ul>
+<li>ContextualNHibernateFacility: inherits from NHibernateFacility and all it does is to replace some of the standard components registered by the original facility specifying the right Lifestyle for the new ones.</li>
+<li>ContextualPerThreadStore: inherits from AbstractDictStackSessionStore and provides a contextual session storage where there will be a different session for each instance of this class for each thread (tricky). The original CallContextSessionStore uses the call-context to store sessions, that means that two different instances of CallContextSessionStore will return the same session for the same call-context... this behavior is the one that I didn&#39;t like.</li>
+<li>ContextualSessionManager: just inherits from DefaultSessionManager to specify a custom lifestyle (see below) to be use by Microkernel to manage this component.</li>
+<li>ResolutionContextLifestyleManager: inherits from AbstractLifestylemanager. This is the “thing” that delimits our contexts. For more information go <a href="/2008/11/custom-windsor-lifestyle.html">here</a></li>
+</ul>
+<p>This set of components allow me to use the container to resolve presenters, ViewModels, forms, or anything else that I&#39;d like to use to delimit a context, like this:</p>
+<pre class="highlighted"><code class="cs"><span class="keyword">var</span> presenter = container.Resolve&lt;IBlogPresenter&gt;();</code></pre>
+<p>then, every required dependency (including the NH session manager) is resolved within the same context, all of this without even making any component aware of the existence of such grouping.</p>
+<p>It is all handled by the container, which is exactly what I was looking for.</p>
+<h3>Sample Project</h3>
+<p>I&#39;ve put together a small spike to illustrate these concepts. Maybe a more complex application would be more suitable to present some things, but for now this is all I&#39;ve done.</p>
+<p>The sample solution uses NHibernate, Windsor, NH facility, ATM (automatic transaction management) and a simple WPF UI using Caliburn&#39;s <a href="http://caliburn.codeplex.com/Wiki/View.aspx?title=Action%20Basics&amp;referringTitle=Table%20Of%20Contents">Action</a> support.</p>
+<p>If you&#39;re using SQL Server Express you just need to create an empty DB called “test”, otherwise just modify the settings in App.config to suit your needs. The tables and initial data are created by the application at startup.</p>
+<p>You can download the sample <del><a href="/assets/attachments/CRMSample.zip">here</a></del>.</p>
+<h3>Improvements</h3>
+<p>One obvious thing that is left out here is the capability to resolve more than one root component for a given context (two repositories in two different presenters that get the same ISessionManager) but that is something that could be added with no problem.</p>
+<p>There are probably a lot of scenarios where the approach described here does not apply... I&#39;ve just implemented a solution to my problem that works well for me and I think that maybe someone else can benefit from this.</p>
+<p>I would like to know what do you think about this approach.</p>
+]]></description>
+            <link>http://schuager.com/2009/03/rich-client-nhibernate-session.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2009/03/rich-client-nhibernate-session.html            </guid>
+            <pubDate>Mon, 23 Mar 2009 21:12:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Reporting Services + LocalReport hang]]></title>
+            <description><![CDATA[<p>Just for future reference...</p>
+<p>Winforms application + Reporting Services + LocalReport + bad luck = Application hangs without throwing any exception :(</p>
+<p>I&#39;ve just spend a lot of time trying to figure out what the hell was causing this issue.
+It happened when I did this:</p>
+<pre class="highlighted"><code class="cs">localReport.LoadReportDefinition(stream)
+localReport.GetDataSourceNames()  <span class="comment">// here it hangs 2 of 3 times</span></code></pre>
+<p>I&#39;ve managed to get the data source names from the stream reading some XML but then it hung at another point where the report was referenced again... agrhh!</p>
+<p>Researching a bit more and using Reflector a lot I&#39;ve found out that the issue might have something to do with the report definition being compiled in another application domain the first time that it is required.</p>
+<p>All in all, I&#39;ve solved this issue by changing the threading model of my application from STA (single-threaded apartment) to MTA (multithreaded apartment) by changing this:</p>
+<pre class="highlighted"><code class="cs">[STAThread]
+<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> Main()
+{
+   ...
+}</code></pre>
+<p>to this: </p>
+<pre class="highlighted"><code class="cs">[MTAThread]
+<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> Main()
+{
+   ...
+}</code></pre>
+<p>Perhaps this can save somebody some time.</p>
+]]></description>
+            <link>http://schuager.com/2009/03/reporting-services-localreport-hang.html</link>
+            <guid isPermaLink="true">
+                http://schuager.com/2009/03/reporting-services-localreport-hang.html            </guid>
+            <pubDate>Mon, 09 Mar 2009 19:12:00 GMT</pubDate>
+        </item>
+    </channel>
+</rss>

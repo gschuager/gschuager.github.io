@@ -1,0 +1,117 @@
+<html>
+<head>
+  <title>Inversion of Control container on .NET Compact Framework | Germán Schuager's blog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/rss+xml" title="Germán Schuager &raquo; Feed" href="http://blog.schuager.com/rss.xml" />
+  <meta name="generator" content="DocPad v6.52.1" />
+
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
+  <style >html.wait {
+	cursor: wait !important;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}</style>
+  <link rel="stylesheet" href="/assets/github.css">
+  <link rel="stylesheet" href="/assets/site.css">
+
+</head>
+<body>
+  
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">Germán Schuager's blog</a></h1>
+    </div>
+  </div>
+  <div class="menu">
+    <div class="container">
+      <ul class="pull-left">
+        <li><a href="/">Posts</a></li>
+        <li><a href="/about.html">About</a></li>
+      </ul>
+      <ul class="pull-right no-underline">
+        <li><a href="mailto:gschuager@gmail.com"><i class="icon-envelope"></i></a></li>
+        <li><a href="https://twitter.com/gschuager"><i class="icon-twitter"></i></a></li>
+        <li><a href="http://feeds.feedburner.com/gschuager"><i class="icon-rss"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Inversion of Control container on .NET Compact Framework</h1>
+<p class="post-info">written by <a href="/about.html">Germán Schuager</a> on 2 Apr 2008</p>
+
+<div><p>Once upon a time I started to write an ambitiuos embedded application... I had very little knowledge about .NET, Design Patterns, TDD, DDD and all those cool things at that time.
+My application grew over time and suddenly it became an unmaintainable monster. It was composed of a big web of interrelated components each of one did his work the way they wanted. It was full of singletons and static classes...</p>
+<p>Since that time I&#39;ve studied and learned a lot of usefull things like the ones that I mentioned above, and at some point I decided that I need to do something to prevent the monster from eating me.</p>
+<p>This is where &quot;<a href="http://codebetter.com/blogs/jeremy.miller/archive/2008/03/13/observations.aspx">The Great Refactoring</a>&quot; came in.... TDD... MVP... IoC!</p>
+<p>Among other things I was in the need of a IoC/DI tool that works under .NET Compact Framework. The only one that I&#39;ve found is <a href="http://www.codeplex.com/uIoC">uIoC</a> but it lacks some features that I consider &quot;must haves&quot; for such a tool (constructor injection for example).
+So, I decided to write my own Inversion of Control Container... so CompactContainer borns.</p>
+<p>The API is roughly based on Castle MicroKernel and the main features are:</p>
+<ul>
+<li>Constructor injection</li>
+<li>Handlers for custom creation of different types of objects: I&#39;ve used this to implement a PersistantaceHandler that attemps to create the asked component by deserializing it from disk, and if it can&#39;t then instanciate a new one in the usual way. This feature could be use to implement an IStartable interface with the same effect as the Startable Facility of MicroKernel. (not in the repository yet)</li>
+<li>Lifestyles: Singleton and Transient (the only ones I&#39;ve needed so far)</li>
+</ul>
+<p>The source code can be found at <a href="http://code.google.com/p/compactcontainer/">http://code.google.com/p/compactcontainer/</a>
+Here you can find 2 solutions: one targeted to Pocket PC platform (can be retargeted as needed) and other composed of 2 project, CompactContainer and CompactContainer.Tests that is used to run the tests under the full .NET Framework (uses MBUnit).</p>
+<p>My 2 cents...</p>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script >(function(){
+	/* Did we just livereload? */
+var log = !!(localStorage && console && console.log && true);
+if ( log && localStorage.getItem('/docpad-livereload/reloaded') === 'yes' ) {
+	localStorage.removeItem('/docpad-livereload/reloaded');
+	console.log('LiveReload completed at', new Date())
+}
+
+/* Listen for the regenerated event and perform a reload of the page when the event occurs */
+var listen = function(){
+	var primus = new Primus('/docpad-livereload');
+	primus.on('data', function(data){
+		if ( data && data.message ) {
+			if ( data.message === 'generateBefore' ) {
+				if ( log ) {
+					console.log('LiveReload started at', new Date());
+				}
+				if ( typeof document.getElementsByTagName !== 'undefined' ) {
+	document.getElementsByTagName('html')[0].className += ' wait';
+}
+			}
+			else if ( data.message === 'generateAfter' ) {
+				if ( log ) {
+					localStorage.setItem('/docpad-livereload/reloaded', 'yes');
+				}
+				document.location.reload();
+			}
+		}
+	});
+};
+	/* Inject socket into our page */
+var inject = function(){
+	var t = document.createElement('script');
+	t.type = 'text/javascript';
+	t.async = 'async';
+	t.src = '/primus/primus.js';
+	t.onload = listen;
+	var s = document.getElementsByTagName('script')[0];
+	s.parentNode.insertBefore(t, s);
+};
+	if ( typeof Primus !== 'undefined' ) {
+		listen();
+	} else {
+		inject();
+	}
+})();</script>
+</body>
+</html>
