@@ -3,11 +3,11 @@
     <channel>
         <title><![CDATA[Germán Schuager's blog]]></title>
         <description><![CDATA[Germán Schuager's blog]]></description>
-        <link>http://schuager.com</link>
+        <link>http://blog.schuager.com</link>
         <generator>NodeJS RSS Module</generator>
-        <lastBuildDate>Wed, 11 Sep 2013 22:55:49 GMT</lastBuildDate>
-        <atom:link href="http://schuager.com/rss.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Wed, 11 Sep 2013 22:55:44 GMT</pubDate>
+        <lastBuildDate>Thu, 12 Sep 2013 02:40:04 GMT</lastBuildDate>
+        <atom:link href="http://blog.schuager.com/rss.xml" rel="self" type="application/rss+xml"/>
+        <pubDate>Thu, 12 Sep 2013 02:39:58 GMT</pubDate>
         <item>
             <title><![CDATA[CompactContainer rebump]]></title>
             <description><![CDATA[<p>Almost a year ago I did some experimentation with porting <a href="http://stw.castleproject.org/Windsor.MainPage.ashx">Castle</a> <a href="https://github.com/castleproject/Castle.Windsor">Windsor</a> to be used under the .NET Compact Framework, and while I got it done (excluding several features; mainly everything that has to do with proxys), it was clear that its implementation was not though to be used in a resource-constrained environment.</p>
@@ -45,9 +45,9 @@
 <p>All in all, I&#39;m very happy with the current state of this project and it is actually helping me a lot in some places.</p>
 <p>If you have some comment or suggestion or bug report about CompactContainer, feel free to contact me and let me know!</p>
 ]]></description>
-            <link>http://schuager.com/2011/01/compactcontainer-rebump.html</link>
+            <link>http://blog.schuager.com/2011/01/compactcontainer-rebump.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2011/01/compactcontainer-rebump.html            </guid>
+                http://blog.schuager.com/2011/01/compactcontainer-rebump.html            </guid>
             <pubDate>Sat, 08 Jan 2011 18:37:00 GMT</pubDate>
         </item>
         <item>
@@ -167,9 +167,9 @@
 <p>A simple &quot;notifications&quot; sample application using this helper can be found <a href="/assets/attachments/NotificationsDemo.7z&#39;">here</a></p>
 <p>As a side note, I think that this is one piece of code that can benefit from the deployment method that <a href="http://www.clariusconsulting.net/blogs/kzu/">Daniel</a> describes <a href="http://www.clariusconsulting.net/blogs/kzu/archive/2010/12/08/HowtocreatelightweightreusablesourcecodewithNuGet.aspx">here</a>.</p>
 ]]></description>
-            <link>http://schuager.com/2010/12/deferred-execution-based-on-propertychanged.html</link>
+            <link>http://blog.schuager.com/2010/12/deferred-execution-based-on-propertychanged.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2010/12/deferred-execution-based-on-propertychanged.html            </guid>
+                http://blog.schuager.com/2010/12/deferred-execution-based-on-propertychanged.html            </guid>
             <pubDate>Mon, 13 Dec 2010 05:51:00 GMT</pubDate>
         </item>
         <item>
@@ -205,9 +205,9 @@
 <p>I think I&#39;ve come up with a nice design and I&#39;m very happy with the result 
 All that&#39;s left now is to start bloging more often!</p>
 ]]></description>
-            <link>http://schuager.com/2010/12/moving-to-wordpress.html</link>
+            <link>http://blog.schuager.com/2010/12/moving-to-wordpress.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2010/12/moving-to-wordpress.html            </guid>
+                http://blog.schuager.com/2010/12/moving-to-wordpress.html            </guid>
             <pubDate>Wed, 08 Dec 2010 01:07:00 GMT</pubDate>
         </item>
         <item>
@@ -259,9 +259,9 @@ All that&#39;s left now is to start bloging more often!</p>
 <p>This lifestyle is supposed to work with nested dependencies, generic components, and in multithreaded scenarios, so if you use it and find anything wrong with it, please let me know.</p>
 <p>You can get the code from here: <a href="https://github.com/castleprojectcontrib/Castle.Windsor.Lifestyles">https://github.com/castleprojectcontrib/Castle.Windsor.Lifestyles</a></p>
 ]]></description>
-            <link>http://schuager.com/2010/11/contextual-lifestyle-reloaded.html</link>
+            <link>http://blog.schuager.com/2010/11/contextual-lifestyle-reloaded.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2010/11/contextual-lifestyle-reloaded.html            </guid>
+                http://blog.schuager.com/2010/11/contextual-lifestyle-reloaded.html            </guid>
             <pubDate>Sun, 28 Nov 2010 00:22:00 GMT</pubDate>
         </item>
         <item>
@@ -321,9 +321,9 @@ All that&#39;s left now is to start bloging more often!</p>
 <p><img src="/assets/images/hgiis10.png" alt="hg web"></p>
 <p>Just remember to setup authentication if you are going to use this server over the internet. I left this to you since you can use any of the standard IIS authentication methods available.</p>
 ]]></description>
-            <link>http://schuager.com/2010/03/how-to-setup-mercurial-server-on.html</link>
+            <link>http://blog.schuager.com/2010/03/how-to-setup-mercurial-server-on.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2010/03/how-to-setup-mercurial-server-on.html            </guid>
+                http://blog.schuager.com/2010/03/how-to-setup-mercurial-server-on.html            </guid>
             <pubDate>Fri, 19 Mar 2010 22:39:00 GMT</pubDate>
         </item>
         <item>
@@ -347,9 +347,9 @@ All that&#39;s left now is to start bloging more often!</p>
 <span class="tag">&lt;/<span class="title">target</span>&gt;</span></code></pre>
 <p>Just put this target as a dependency somewhere else and use the property &quot;hg.revision.hash&quot; as you see fit.</p>
 ]]></description>
-            <link>http://schuager.com/2010/03/nant-task-for-getting-mercurial-current.html</link>
+            <link>http://blog.schuager.com/2010/03/nant-task-for-getting-mercurial-current.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2010/03/nant-task-for-getting-mercurial-current.html            </guid>
+                http://blog.schuager.com/2010/03/nant-task-for-getting-mercurial-current.html            </guid>
             <pubDate>Tue, 16 Mar 2010 15:58:00 GMT</pubDate>
         </item>
         <item>
@@ -382,9 +382,9 @@ All that&#39;s left now is to start bloging more often!</p>
 <p>This way allows you to support a different RDBMS just by registering the corresponding function implementation in a new derived dialect and without modifying your code.</p>
 <p>Thanks to <a href="http://darioquintana.com.ar/blogging/">Dario</a> for the tip.</p>
 ]]></description>
-            <link>http://schuager.com/2009/06/case-sensitive-queries-in-nhibernate.html</link>
+            <link>http://blog.schuager.com/2009/06/case-sensitive-queries-in-nhibernate.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2009/06/case-sensitive-queries-in-nhibernate.html            </guid>
+                http://blog.schuager.com/2009/06/case-sensitive-queries-in-nhibernate.html            </guid>
             <pubDate>Fri, 19 Jun 2009 17:21:00 GMT</pubDate>
         </item>
         <item>
@@ -428,9 +428,9 @@ All that&#39;s left now is to start bloging more often!</p>
 <p>Well, enough writing for now, you can check out the project&#39;s home page for a little more specific information and you can also download the source code (it is really simple) or a ready-to-work binary.</p>
 <p><a href="http://code.google.com/p/nlaunch/">http://code.google.com/p/nlaunch/</a></p>
 ]]></description>
-            <link>http://schuager.com/2009/04/introducing-nlaunch.html</link>
+            <link>http://blog.schuager.com/2009/04/introducing-nlaunch.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2009/04/introducing-nlaunch.html            </guid>
+                http://blog.schuager.com/2009/04/introducing-nlaunch.html            </guid>
             <pubDate>Wed, 29 Apr 2009 17:58:00 GMT</pubDate>
         </item>
         <item>
@@ -560,9 +560,9 @@ container.Resolve&lt;IAggregatorService&gt;(With.Dependency&lt;ISessionManager&g
 <p>There are probably a lot of scenarios where the approach described here does not apply... I&#39;ve just implemented a solution to my problem that works well for me and I think that maybe someone else can benefit from this.</p>
 <p>I would like to know what do you think about this approach.</p>
 ]]></description>
-            <link>http://schuager.com/2009/03/rich-client-nhibernate-session.html</link>
+            <link>http://blog.schuager.com/2009/03/rich-client-nhibernate-session.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2009/03/rich-client-nhibernate-session.html            </guid>
+                http://blog.schuager.com/2009/03/rich-client-nhibernate-session.html            </guid>
             <pubDate>Mon, 23 Mar 2009 21:12:00 GMT</pubDate>
         </item>
         <item>
@@ -589,9 +589,9 @@ localReport.GetDataSourceNames()  <span class="comment">// here it hangs 2 of 3 
 }</code></pre>
 <p>Perhaps this can save somebody some time.</p>
 ]]></description>
-            <link>http://schuager.com/2009/03/reporting-services-localreport-hang.html</link>
+            <link>http://blog.schuager.com/2009/03/reporting-services-localreport-hang.html</link>
             <guid isPermaLink="true">
-                http://schuager.com/2009/03/reporting-services-localreport-hang.html            </guid>
+                http://blog.schuager.com/2009/03/reporting-services-localreport-hang.html            </guid>
             <pubDate>Mon, 09 Mar 2009 19:12:00 GMT</pubDate>
         </item>
     </channel>
